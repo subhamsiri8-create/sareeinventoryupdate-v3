@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subham Grand | Supply Intelligence</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root{--bg:#f0f4f8;--bg-secondary:#ffffff;--text:#102a43;--text-muted:#627d98;--accent:#00b894;--accent-dark:#00a383;--danger:#d63031;--danger-light:#ff7675;--warning:#fdcb6e;--success:#00b894;--info:#0984e3;--border:#d9e2ec;--card-shadow:0 10px 40px -10px rgba(0,0,0,0.08);--hover-bg:#f7fafc}
+        .dark-mode{--bg:#0a192f;--bg-secondary:#112240;--text:#e6f1ff;--text-muted:#8892b0;--accent:#64ffda;--accent-dark:#4fd1c5;--danger:#ff6b6b;--danger-light:#ff8787;--warning:#ffeaa7;--success:#64ffda;--info:#4ea8de;--border:#233554;--card-shadow:0 10px 40px -10px rgba(0,0,0,0.5);--hover-bg:#172a45}
+        *{box-sizing:border-box;margin:0;padding:0}
+        body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh;transition:background .4s,color .4s;-webkit-font-smoothing:antialiased}
+        .mono{font-family:'JetBrains Mono',monospace}
+        .container{max-width:1600px;margin:0 auto;padding:32px}
+        .card{background:var(--bg-secondary);border:1px solid var(--border);border-radius:16px;box-shadow:var(--card-shadow);transition:transform .3s,box-shadow .3s,background .3s}
+        .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 20px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;border:none;transition:all .25s;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
+        .btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent-dark));color:#fff;box-shadow:0 4px 14px rgba(0,184,148,.3)}.btn-primary:hover{transform:translateY(-1px);filter:brightness(1.1)}
+        .btn-danger{background:linear-gradient(135deg,var(--danger),var(--danger-light));color:#fff;box-shadow:0 4px 14px rgba(214,48,49,.3)}.btn-danger:hover{transform:translateY(-1px);filter:brightness(1.1)}
+        .btn-success{background:linear-gradient(135deg,#10b981,#059669);color:#fff}
+        .btn-info{background:linear-gradient(135deg,var(--info),#0077b6);color:#fff;box-shadow:0 4px 14px rgba(9,132,227,.3)}.btn-info:hover{transform:translateY(-1px);filter:brightness(1.1)}
+        .btn-secondary{background:var(--bg);color:var(--text);border:2px solid var(--border)}.btn-secondary:hover{background:var(--hover-bg);border-color:var(--accent);color:var(--accent)}
+        .btn-cloud{background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;box-shadow:0 4px 14px rgba(99,102,241,.3)}
+        .input-field{width:100%;padding:12px 16px;border:2px solid var(--border);border-radius:10px;font-size:14px;font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);transition:all .2s}.input-field:focus{outline:none;border-color:var(--accent)}
+        .tab-bar{display:flex;gap:6px;background:var(--bg-secondary);padding:6px;border-radius:14px;border:1px solid var(--border);margin-bottom:24px}
+        .tab-btn{flex:1;padding:12px 20px;border-radius:10px;border:none;background:transparent;color:var(--text-muted);font-weight:700;font-size:13px;cursor:pointer;transition:all .3s}
+        .tab-btn.active{background:var(--accent);color:#fff;box-shadow:0 4px 12px rgba(0,184,148,.3)}.tab-btn:not(.active):hover{background:var(--hover-bg)}
+        .table-container{overflow:auto;max-height:65vh;border:1px solid var(--border);border-radius:12px;background:var(--bg-secondary);position:relative}
+        .table-container-xl{max-height:78vh}
+        table{display:table;width:100%;border-collapse:separate;border-spacing:0;min-width:1200px}
+        th{background:var(--bg);padding:14px 8px;text-align:center;font-size:11px;font-weight:800;text-transform:uppercase;color:var(--text-muted);border-bottom:2px solid var(--border);border-left:1px solid var(--border);letter-spacing:.5px;position:sticky;top:0;z-index:10;white-space:nowrap}
+        .col-cat{width:240px;min-width:240px;max-width:240px}.col-mrp{width:150px;min-width:150px;max-width:150px}.col-data{width:100px;min-width:100px}.col-store{width:80px;min-width:80px;max-width:80px}
+        th:first-child{border-left:none;text-align:left;padding-left:20px;border-radius:12px 0 0 0}
+        th.group-header{background:linear-gradient(135deg,var(--accent),var(--accent-dark));color:#fff;font-size:13px;border-bottom:none;font-weight:700;z-index:15}
+        th.sub-header{font-size:10px;background:rgba(0,184,148,.05);color:var(--accent);border-bottom:2px solid var(--accent);font-weight:700;top:44px}
+        td{padding:10px 6px;font-size:12px;border-bottom:1px solid var(--border);border-left:1px solid var(--border);text-align:center;vertical-align:middle;transition:background .2s;background:var(--bg-secondary)}
+        td:first-child{border-left:none;text-align:left;padding-left:20px;font-weight:700;color:var(--text)}
+        tbody tr:hover td{background:var(--hover-bg)!important}tbody tr:hover td:first-child{color:var(--accent)}
+        .sticky-col-1{position:sticky;left:0;z-index:5;width:240px;min-width:240px;max-width:240px;border-right:2px solid var(--border);background:var(--bg-secondary)}
+        .sticky-col-2{position:sticky;left:240px;z-index:5;width:150px;min-width:150px;max-width:150px;border-right:2px solid var(--border);background:var(--bg-secondary)}
+        thead .sticky-col-1,thead .sticky-col-2{z-index:20;background:var(--bg)}
+        tbody tr:hover .sticky-col-1,tbody tr:hover .sticky-col-2{background:var(--hover-bg)!important}
+        .sticky-action{position:sticky;right:0;z-index:5;background:var(--bg-secondary);border-left:2px solid var(--border)}
+        thead .sticky-action{z-index:20;background:var(--bg)}tbody tr:hover .sticky-action{background:var(--hover-bg)!important}
+        tr.total-row td.sticky-col-1,tr.total-row td.sticky-col-2,tr.total-row td.sticky-action{background:rgba(0,184,148,.03)}
+        .num-target{background-color:rgba(9,132,227,.1);color:var(--info);font-family:'JetBrains Mono',monospace;font-weight:700;display:block;padding:6px;border-radius:6px;border:1px solid rgba(9,132,227,.2);font-size:12px}
+        .num-stock{font-family:'JetBrains Mono',monospace;font-weight:700;display:block;padding:6px;border-radius:6px;border:1px solid transparent;cursor:pointer;transition:all .2s;font-size:12px;color:#000}.num-stock:hover{opacity:.8;transform:scale(1.05)}
+        .dark-mode .num-stock{color:var(--text)}
+        .stock-surplus{background-color:#fecaca;border-color:#fca5a5}.stock-short{background-color:#bbf7d0;border-color:#86efac}.stock-equal{background-color:#bfdbfe;border-color:#93c5fd}
+        .purchase-matrix-val{background-color:rgba(214,48,49,.1);color:var(--danger);font-family:'JetBrains Mono',monospace;font-weight:700;display:block;padding:6px;border-radius:6px;border:1px solid rgba(214,48,49,.2);font-size:12px}
+        .purchase-total-val{background:linear-gradient(135deg,rgba(214,48,49,.15),rgba(214,48,49,.25));color:var(--danger);font-family:'JetBrains Mono',monospace;font-weight:900;display:block;padding:8px;border-radius:8px;border:2px solid rgba(214,48,49,.3);font-size:14px}
+        .transfer-inflow-val{background-color:rgba(9,132,227,.12);color:var(--info);font-family:'JetBrains Mono',monospace;font-weight:700;display:block;padding:6px;border-radius:6px;border:1px solid rgba(9,132,227,.25);font-size:12px;cursor:default}
+        .transfer-total-val{background:linear-gradient(135deg,rgba(9,132,227,.15),rgba(9,132,227,.25));color:var(--info);font-family:'JetBrains Mono',monospace;font-weight:900;display:block;padding:8px;border-radius:8px;border:2px solid rgba(9,132,227,.3);font-size:14px}
+        .transfer-source-val{background-color:rgba(253,203,110,.15);color:#92400e;font-family:'JetBrains Mono',monospace;font-weight:700;display:block;padding:6px;border-radius:6px;border:1px solid rgba(253,203,110,.35);font-size:11px}
+        .dark-mode .transfer-source-val{background-color:rgba(253,203,110,.08);color:var(--warning);border-color:rgba(253,203,110,.2)}
+        .zero-dash{color:var(--text-muted);font-size:11px;opacity:.5}
+        .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;z-index:100;padding:24px}
+        .modal-content{background:var(--bg-secondary);border-radius:20px;max-width:600px;width:100%;max-height:90vh;overflow:hidden;box-shadow:0 25px 50px -12px rgba(0,0,0,.4);border:1px solid var(--border)}
+        .modal-lg{max-width:900px}.hidden{display:none!important}
+        .report-header{padding:32px;border-radius:16px;margin-bottom:32px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 10px 30px -5px rgba(0,0,0,.3)}
+        .report-header.transfer{background:linear-gradient(135deg,var(--info),#0077b6);color:#fff}
+        .report-header.purchase{background:linear-gradient(135deg,var(--danger),var(--danger-light));color:#fff}
+        .badge{display:inline-flex;padding:5px 10px;border-radius:6px;font-size:10px;font-weight:700;border:1px solid transparent}
+        .badge-danger{background:rgba(214,48,49,.1);color:var(--danger)}.badge-info{background:rgba(9,132,227,.1);color:var(--info)}
+        .badge-warning{background:rgba(253,203,110,.15);color:#92400e}.badge-success{background:rgba(0,184,148,.1);color:var(--accent)}
+        .badge-cloud{background:rgba(99,102,241,.12);color:#6366f1;border-color:rgba(99,102,241,.25)}
+        .dark-mode .badge-cloud{background:rgba(99,102,241,.15);color:#a5b4fc;border-color:rgba(99,102,241,.3)}
+        .dark-mode .badge-warning{background:rgba(253,203,110,.08);color:var(--warning)}
+        .brand-icon{width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent-dark));display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,184,148,.25)}
+        #toast{visibility:hidden;min-width:280px;background-color:var(--accent);color:#fff;text-align:center;border-radius:10px;padding:14px 20px;position:fixed;z-index:200;left:50%;bottom:30px;transform:translateX(-50%);font-size:13px;font-weight:700;box-shadow:0 4px 20px rgba(0,0,0,.25)}
+        #toast.show{visibility:visible;animation:fadein .5s,fadeout .5s 2.5s}
+        @keyframes fadein{from{bottom:0;opacity:0}to{bottom:30px;opacity:1}}
+        @keyframes fadeout{from{bottom:30px;opacity:1}to{bottom:0;opacity:0}}
+        tr.grand-total-row td{background:rgba(9,132,227,.06)!important;font-weight:900;border-top:3px double var(--info)}
+        tr.grand-total-row td.sticky-col-1,tr.grand-total-row td.sticky-col-2,tr.grand-total-row td.sticky-action{background:rgba(9,132,227,.08)!important}
+        tbody tr.grand-total-row:hover td{background:rgba(9,132,227,.1)!important}
+        .flow-card{padding:16px;border-radius:12px;text-align:center;border:1px solid var(--border)}
+        .flow-card .label{font-size:10px;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:4px}
+        .flow-card .value{font-size:20px;font-weight:800}
+        .sync-dot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:6px;flex-shrink:0}
+        .sync-dot.online{background:var(--success);box-shadow:0 0 8px var(--success)}
+        .sync-dot.offline{background:var(--danger)}
+        .sync-dot.syncing{background:var(--warning);animation:pulse 1s infinite}
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+        .setup-banner{background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;padding:20px 32px;border-radius:16px;margin-bottom:24px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 8px 24px rgba(99,102,241,.3)}
+        .lock-notice{background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.2);border-radius:10px;padding:12px 16px;font-size:12px;color:#4338ca;display:flex;align-items:center;gap:8px;margin-bottom:20px}
+        .dark-mode .lock-notice{background:rgba(99,102,241,.1);border-color:rgba(99,102,241,.25);color:#a5b4fc}
+        .cloud-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700;background:rgba(99,102,241,.1);color:#6366f1;border:1px solid rgba(99,102,241,.2)}
+        .dark-mode .cloud-badge{background:rgba(99,102,241,.15);color:#a5b4fc;border-color:rgba(99,102,241,.3)}
+        #debugLog{position:fixed;bottom:10px;right:10px;max-width:400px;max-height:200px;overflow:auto;background:rgba(0,0,0,.9);color:#0f0;font-family:'JetBrains Mono',monospace;font-size:10px;padding:10px;border-radius:8px;z-index:300;display:none}
+        .tf-gap-cell{background:rgba(253,203,110,.08);color:var(--text-muted);font-family:'JetBrains Mono',monospace;font-weight:600;display:block;padding:6px;border-radius:6px;font-size:11px;border:1px dashed rgba(253,203,110,.3)}
+        .dark-mode .tf-gap-cell{background:rgba(253,203,110,.05);border-color:rgba(253,203,110,.15)}
+        .tf-inflow-cell{background-color:rgba(9,132,227,.12);color:var(--info);font-family:'JetBrains Mono',monospace;font-weight:700;display:block;padding:6px;border-radius:6px;border:1px solid rgba(9,132,227,.25);font-size:12px}
+        .tf-source-tag{display:inline-flex;align-items:center;gap:4px;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:700;background:rgba(253,203,110,.2);color:#92400e;border:1px solid rgba(253,203,110,.3);margin-top:2px}
+        .dark-mode .tf-source-tag{background:rgba(253,203,110,.1);color:var(--warning);border-color:rgba(253,203,110,.2)}
+        @media(max-width:768px){.flow-grid{grid-template-columns:repeat(2,1fr)!important}.container{padding:16px}}
+        @media print{.no-print{display:none!important}}
+    </style>
+</head>
+<body>
+
+<div id="dashboardView" class="container">
+    <header class="card p-8 mb-8">
+        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+            <div class="flex items-center gap-5">
+                <div class="brand-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h18v18H3zM9 3v18M15 3v18M3 9h18M3 15h18"/></svg></div>
+                <div><h1 class="text-2xl font-extrabold tracking-tight">Subham Grand</h1><p class="text-sm font-medium" style="color:var(--text-muted)">Supply Intelligence — Cloud Based</p></div>
+            </div>
+            <div class="flex flex-wrap gap-3 items-center no-print">
+                <div id="syncStatus" class="flex items-center text-xs font-bold" style="color:var(--text-muted);cursor:pointer" onclick="openCloudModal()" title="Cloud Settings"><span id="syncDot" class="sync-dot syncing"></span><span id="syncLabel">Loading...</span></div>
+                <div id="cloudModeBadge" class="cloud-badge hidden"><span>🔒</span><span>Cloud Server Live</span></div>
+                <button onclick="toggleTheme()" class="btn btn-secondary">Theme</button>
+                <button onclick="openTransferReport()" class="btn btn-info">Transfer</button>
+                <button onclick="openPurchaseReport()" class="btn btn-danger">Purchase</button>
+                <button onclick="document.getElementById('uploadInput').click()" class="btn btn-primary">Upload Stock</button>
+                <input type="file" id="uploadInput" class="hidden" accept=".xlsx, .xls, .csv" onchange="handleFileUpload(event)">
+                <button onclick="resetStockData()" class="btn btn-secondary">Clear Stock</button>
+                <button onclick="exportMatrixExcel()" class="btn btn-info">Export</button>
+                <button onclick="openManualModal()" class="btn btn-secondary">Manual</button>
+            </div>
+        </div>
+    </header>
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="card p-6" style="border-left:5px solid var(--accent)"><p class="text-xs font-bold uppercase tracking-wider mb-2" style="color:var(--text-muted)">Total Target</p><div id="totalBase" class="text-3xl font-extrabold mono">0</div></div>
+        <div class="card p-6" style="border-left:5px solid var(--info)"><p class="text-xs font-bold uppercase tracking-wider mb-2" style="color:var(--text-muted)">Total Stock</p><div id="totalPresent" class="text-3xl font-extrabold mono" style="color:var(--info)">0</div></div>
+        <div class="card p-6" style="border-left:5px solid var(--danger)"><p class="text-xs font-bold uppercase tracking-wider mb-2" style="color:var(--danger)">Net Shortage</p><div id="purchaseSuggestion" class="text-3xl font-extrabold mono" style="color:var(--danger)">0</div></div>
+        <div class="card p-6" style="border-left:5px solid var(--success)"><p class="text-xs font-bold uppercase tracking-wider mb-2" style="color:var(--text-muted)">Efficiency</p><div id="efficiency" class="text-3xl font-extrabold mono" style="color:var(--success)">0%</div></div>
+    </div>
+    <div class="tab-bar no-print">
+        <button class="tab-btn active" onclick="switchTab('matrix',this)">Stock Matrix</button>
+        <button class="tab-btn" onclick="switchTab('analytics',this)">Analytics</button>
+        <button class="tab-btn" onclick="switchTab('actions',this)">Actions</button>
+    </div>
+    <div id="tabMatrix" class="tab-content"><div class="card"><div class="table-container" style="border:none"><table id="horizontalTable"><thead id="matrixHead"></thead><tbody id="tableBody"></tbody></table></div></div></div>
+    <div id="tabAnalytics" class="tab-content hidden"><div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8"><div class="card p-8"><div class="flex justify-between items-center mb-6"><h3 class="font-bold text-lg">Category Deep Dive</h3><select id="chartFilter" onchange="refreshCharts()" class="input-field" style="width:auto"></select></div><div style="position:relative;height:350px"><canvas id="mainChart"></canvas></div></div><div class="card p-8 flex flex-col justify-center items-center text-center"><h3 class="font-bold text-lg mb-6">Network Health</h3><p class="text-sm" style="color:var(--text-muted)">Select a category to analyze.</p><div class="mt-6 p-6 rounded-xl w-full" style="background:var(--bg)"><p class="text-xs uppercase tracking-wider font-bold mb-2" style="color:var(--text-muted)">Total Categories</p><p id="totalCatsCount" class="text-4xl font-extrabold mono">0</p></div></div></div></div>
+    <div id="tabActions" class="tab-content hidden">
+        <div class="lock-notice"><span style="font-size:16px">🔒</span><span id="actionsLockText">Targets, Categories & MRP ranges are fixed. Only stock values are editable.</span></div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div id="addBranchCard" class="card p-8"><h3 class="font-bold mb-6 text-sm uppercase tracking-wider" style="color:var(--text-muted)">Add Branch</h3><div class="flex gap-3"><input type="text" id="newBr" placeholder="Branch Name" class="input-field"><button onclick="addBr()" class="btn btn-primary">Add</button></div></div>
+            <div class="card p-8" style="opacity:.6;pointer-events:none"><h3 class="font-bold mb-6 text-sm uppercase tracking-wider" style="color:var(--text-muted)">Add Category <span class="badge badge-cloud">SHEET LOCKED</span></h3><p class="text-xs mt-3" style="color:var(--text-muted)">Edit categories in Google Sheet → Targets tab.</p></div>
+            <div class="card p-8" style="opacity:.6;pointer-events:none"><h3 class="font-bold mb-6 text-sm uppercase tracking-wider" style="color:var(--text-muted)">Set Target <span class="badge badge-cloud">SHEET LOCKED</span></h3><p class="text-xs mt-3" style="color:var(--text-muted)">Edit targets in Google Sheet → Targets tab.</p></div>
+        </div>
+    </div>
+</div>
+
+<div id="transferReportView" class="container hidden">
+    <div class="report-header transfer">
+        <div>
+            <h1 class="text-3xl font-extrabold tracking-tight">Stock Transfer Report</h1>
+            <p class="text-sm opacity-80 mt-1">Optimizing existing inventory movement across stores</p>
+        </div>
+        <div class="flex gap-3 no-print">
+            <button onclick="exportTransferExcel()" class="btn btn-secondary" style="background:rgba(255,255,255,.15);border:none;color:#fff">Export List</button>
+            <button onclick="closeTransferReport()" class="btn btn-secondary" style="background:rgba(255,255,255,.15);border:none;color:#fff">Close</button>
+        </div>
+    </div>
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="card p-6" style="border-left:5px solid var(--info)"><p class="text-xs font-bold uppercase tracking-wider mb-2" style="color:var(--text-muted)">Total Items to Transfer</p><div id="reportTotalTransfer" class="text-3xl font-extrabold mono" style="color:var(--info)">0</div></div>
+        <div class="card p-6" style="border-left:5px solid var(--success)"><p class="text-xs font-bold uppercase tracking-wider mb-2" style="color:var(--text-muted)">Purchases Saved</p><div id="reportSavedPurchase" class="text-3xl font-extrabold mono" style="color:var(--success)">0</div></div>
+        <div class="card p-6" style="border-left:5px solid var(--warning)"><p class="text-xs font-bold uppercase tracking-wider mb-2" style="color:var(--text-muted)">Categories with Moves</p><div id="reportCatMoves" class="text-3xl font-extrabold mono" style="color:#92400e">0</div></div>
+        <div class="card p-6" style="border-left:5px solid var(--accent)"><p class="text-xs font-bold uppercase tracking-wider mb-2" style="color:var(--text-muted)">Routes Active</p><div id="reportRoutesActive" class="text-3xl font-extrabold mono" style="color:var(--accent)">0</div></div>
+    </div>
+    <div class="card mb-6 p-5" style="background:rgba(9,132,227,.04);border-color:rgba(9,132,227,.15)">
+        <div class="flex items-start gap-3">
+            <span style="font-size:18px">ℹ️</span>
+            <div>
+                <p class="text-sm font-bold" style="color:var(--info)">How Transfer Works</p>
+                <p class="text-xs mt-1" style="color:var(--text-muted)">For each MRP row: <strong>Gap = Current Stock − Target</strong>. Positive gaps (surplus stores) feed negative gaps (shortage stores). The "INFLOW" column shows how many items each shortage store receives. The "SOURCE" tag shows which surplus store sends them. Items moved here reduce your purchase requirement by the same amount.</p>
+            </div>
+        </div>
+    </div>
+    <div class="card"><div class="table-container table-container-xl" style="border:none"><table id="transferTable"><thead id="transferTableHead"></thead><tbody id="transferTableBody"></tbody></table></div></div>
+</div>
+
+<div id="purchaseReportView" class="container hidden">
+    <div class="report-header purchase"><div><h1 class="text-3xl font-extrabold tracking-tight">Purchase Requirement Report</h1></div><div class="flex gap-3 no-print"><button onclick="exportSmartPurchaseExcel()" class="btn btn-secondary" style="background:rgba(255,255,255,.15);border:none;color:#fff">Export</button><button onclick="closePurchaseReport()" class="btn btn-secondary" style="background:rgba(255,255,255,.15);border:none;color:#fff">Close</button></div></div>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8"><div class="card p-8 lg:col-span-2"><h3 class="font-bold mb-6 text-lg">Top 5 Critical Categories</h3><div style="height:280px;position:relative"><canvas id="purchaseSummaryChart"></canvas></div></div><div class="card p-8 flex flex-col justify-center"><div class="text-center mb-6"><p class="text-xs uppercase tracking-wider font-bold mb-2" style="color:var(--text-muted)">Total to Purchase</p><p class="text-5xl font-extrabold mono" style="color:var(--danger)" id="reportTotalPurchase">0</p></div><div class="text-center"><p class="text-xs uppercase tracking-wider font-bold mb-2" style="color:var(--text-muted)">Stores Affected</p><p class="text-3xl font-bold mono" id="reportStoresAffected">0</p></div></div></div>
+    <div class="card"><div class="table-container table-container-xl" style="border:none"><table id="purchaseTable"><thead id="purchaseTableHead"></thead><tbody id="purchaseTableBody"></tbody></table></div></div>
+</div>
+
+<div id="cloudModal" class="modal-overlay hidden"><div class="modal-content"><div class="p-8" style="background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff"><h2 class="text-xl font-bold">☁ Google Sheet Connection</h2></div><div class="p-8 space-y-5"><div><label class="text-xs font-bold block mb-2 uppercase tracking-wider" style="color:var(--text-muted)">Apps Script URL</label><input type="url" id="apiUrlInput" class="input-field mono text-xs"></div><div id="cloudTestResult" class="hidden p-4 rounded-xl text-sm font-bold"></div><div class="flex gap-3"><button onclick="doCloudPull()" class="btn btn-info flex-1">⬇ Pull All from Sheet</button><button onclick="doCloudPush()" class="btn btn-success flex-1">⬆ Push Stock Only</button></div></div><div class="p-5 text-center" style="border-top:1px solid var(--border)"><button onclick="closeCloudModal()" class="text-xs font-bold uppercase tracking-wider" style="color:var(--text-muted);cursor:pointer">Close</button></div></div></div>
+
+<div id="manualModal" class="modal-overlay hidden"><div class="modal-content"><div class="p-8" style="background:var(--accent);color:#fff"><h2 class="text-xl font-bold">Manual Stock Entry</h2></div><div class="p-8 space-y-5"><div class="grid grid-cols-2 gap-5"><div><label class="text-xs font-bold block mb-2 uppercase tracking-wider" style="color:var(--text-muted)">Category</label><input type="text" id="manualCatInput" list="catList" class="input-field" placeholder="Select or type" oninput="updateMrpOptions()"><datalist id="catList"></datalist></div><div><label class="text-xs font-bold block mb-2 uppercase tracking-wider" style="color:var(--text-muted)">MRP Range</label><input type="text" id="manualMrp" list="mrpList" class="input-field" placeholder="Select MRP"><datalist id="mrpList"></datalist></div></div><div class="grid grid-cols-2 gap-5"><div><label class="text-xs font-bold block mb-2 uppercase tracking-wider" style="color:var(--text-muted)">Branch</label><select id="manualBranch" class="input-field"><option value="-1">ALL STORES</option></select></div><div><label class="text-xs font-bold block mb-2 uppercase tracking-wider" style="color:var(--text-muted)">Stock Value</label><input type="number" id="manualStock" class="input-field" placeholder="Current Stock"></div></div><button onclick="saveManualData()" class="btn btn-success w-full py-4 mt-2 text-base">Save Stock Entry</button></div><div class="p-5 text-center" style="border-top:1px solid var(--border)"><button onclick="closeManualModal()" class="text-xs font-bold uppercase tracking-wider" style="color:var(--text-muted);cursor:pointer">Cancel</button></div></div></div>
+
+<div id="modal" class="modal-overlay hidden"><div class="modal-content modal-lg"><div class="p-8 flex justify-between items-center" style="background:var(--accent);color:#fff"><h2 id="modalStore" class="text-xl font-bold"></h2><button onclick="closeModal()" class="text-3xl opacity-80 hover:opacity-100" style="background:none;border:none;color:#fff;cursor:pointer">&times;</button></div><div id="modalBody" class="p-8 space-y-5 max-h-[80vh] overflow-y-auto"></div><div class="p-5 flex gap-3 no-print" style="border-top:1px solid var(--border)"><button onclick="exportBranchReport()" class="btn btn-info w-full">Export</button><button onclick="closeModal()" class="btn btn-secondary w-full">Close</button></div></div></div>
+
+<div id="toast"></div>
+<div id="debugLog"></div>
+
+<script>
+var stores=[], Z=[], inventoryData=[], mainChart=null, currentModalBranchIndex=null, branchModalChart=null, purchaseSummaryChart=null, transferSummaryChart=null;
+var API_URL='https://script.google.com/macros/s/AKfycbx4-e2v7PvRrAUZE7AH38BylKj2IrmpYc_T76gWMNGU_BK3t5FJXP7QYDkD3mC9eM-0Dg/exec';
+var cloudOnline=false, isSyncing=false, cloudConnected=false;
+
+function dbg(msg){var d=document.getElementById('debugLog');d.style.display='block';d.innerHTML+=msg+'<br>';d.scrollTop=d.scrollHeight;}
+
+function updateSyncUI(){var d=document.getElementById('syncDot'),l=document.getElementById('syncLabel'),cb=document.getElementById('cloudModeBadge');if(isSyncing){d.className='sync-dot syncing';l.textContent='Syncing...';cb.classList.add('hidden');}else if(cloudConnected){d.className='sync-dot online';l.textContent='Sheet Live';cb.classList.remove('hidden');}else{d.className='sync-dot offline';l.textContent='Offline';cb.classList.add('hidden');}updateActionsLock(cloudConnected);}
+function updateActionsLock(locked){var card=document.getElementById('addBranchCard'),txt=document.getElementById('actionsLockText');if(!card)return;var inp=card.querySelector('input'),btn=card.querySelector('button'),h3=card.querySelector('h3');if(locked){card.style.opacity='.6';card.style.pointerEvents='none';inp.disabled=true;btn.disabled=true;h3.innerHTML='Add Branch <span class="badge badge-cloud">SHEET LOCKED</span>';txt.innerHTML='<strong>Cloud connected.</strong> Stores, Categories, MRP ranges & Targets come from Google Sheet. Only stock values are editable.';}else{card.style.opacity='1';card.style.pointerEvents='auto';inp.disabled=false;btn.disabled=false;h3.innerHTML='Add Branch';txt.innerHTML='Targets, Categories & MRP ranges are fixed. Only stock values are editable.';}}
+
+async function googleFetch(url, options) {
+    dbg('Fetching: ' + url.substring(0, 80) + '...');
+    try {
+        var response = await fetch(url, Object.assign({
+            redirect: 'follow',
+            headers: { 'Accept': 'application/json', 'Content-Type': 'text/plain' }
+        }, options || {}));
+        dbg('Status: ' + response.status + ' ' + response.statusText);
+        dbg('Final URL: ' + response.url.substring(0, 80) + '...');
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+        var text = await response.text();
+        dbg('Response length: ' + text.length);
+        if (text.indexOf('<!DOCTYPE') >= 0 || text.indexOf('<html') >= 0) {
+            throw new Error('Got HTML instead of JSON. Check: 1) Script deployed as Web App 2) Execute as: Me 3) Access: Anyone');
+        }
+        return JSON.parse(text);
+    } catch(e) {
+        dbg('ERROR: ' + e.message);
+        throw e;
+    }
+}
+
+async function syncLoad(){
+    if(!API_URL)return false;
+    try{
+        isSyncing=true;updateSyncUI();
+        var d=await googleFetch(API_URL+'?action=load&t='+Date.now());
+        if(d.error)throw new Error(d.error);
+        stores=d.stores||[];inventoryData=d.inventory||[];
+        dbg('Loaded: '+stores.length+' stores, '+inventoryData.length+' categories');
+        initPresentArrays(inventoryData);enforceDataIntegrity();
+        try{localStorage.setItem('subham_inventory',JSON.stringify(inventoryData));localStorage.setItem('subham_stores',JSON.stringify(stores));}catch(e){}
+        cloudOnline=true;cloudConnected=true;return true;
+    }catch(e){dbg('syncLoad failed: '+e.message);cloudOnline=false;cloudConnected=false;return false;}
+    finally{isSyncing=false;updateSyncUI();}
+}
+
+async function syncSave(){
+    if(!API_URL)return false;
+    try{
+        isSyncing=true;updateSyncUI();enforceDataIntegrity();
+        var sp=inventoryData.map(function(cat){return{name:cat.name,present:[...cat.present],mrpDetails:cat.mrpDetails.map(function(m){return{range:m.range,present:[...m.present]};})};});
+        var d=await googleFetch(API_URL,{
+            method:'POST',
+            body:JSON.stringify({action:'saveStock',inventory:sp})
+        });
+        if(d.error)throw new Error(d.error);
+        dbg('Saved: '+d.updated+' rows');cloudOnline=true;return true;
+    }catch(e){dbg('syncSave failed: '+e.message);cloudOnline=false;return false;}
+    finally{isSyncing=false;updateSyncUI();}
+}
+
+function openCloudModal(){document.getElementById('apiUrlInput').value=API_URL;document.getElementById('cloudTestResult').classList.add('hidden');document.getElementById('cloudModal').classList.remove('hidden');}
+function closeCloudModal(){document.getElementById('cloudModal').classList.add('hidden');}
+async function doCloudPull(){closeCloudModal();showToast('Pulling from Sheet...');var ok=await syncLoad();if(ok){render();showToast('✓ Pulled '+stores.length+' stores, '+inventoryData.length+' categories from Sheet');}else showToast('Pull failed — check debug log (bottom right)');}
+async function doCloudPush(){closeCloudModal();showToast('Pushing stock...');var ok=await syncSave();showToast(ok?'✓ Stock saved to Sheet':'Push failed — check debug log');}
+
+function sanitizeArray(a,l){if(!Array.isArray(a))return Array(l).fill(0);var c=[];for(var i=0;i<l;i++)c.push(typeof a[i]==='number'&&!isNaN(a[i])?a[i]:0);return c;}
+function initPresentArrays(d){var l=stores.length;d.forEach(function(c){c.present=sanitizeArray(c.present,l);if(Array.isArray(c.mrpDetails)){c.mrpDetails=c.mrpDetails.filter(function(m){return m&&typeof m.range==='string'&&m.range.trim()!=='';});c.mrpDetails.forEach(function(m){m.base=sanitizeArray(m.base,l);m.present=sanitizeArray(m.present,l);});}else{c.mrpDetails=[];}});}
+function enforceDataIntegrity(){var l=stores.length;if(!Array.isArray(inventoryData))inventoryData=[];inventoryData=inventoryData.filter(function(c){return c&&typeof c.name==='string'&&c.name.trim()!=='';});inventoryData.forEach(function(c){if(!Array.isArray(c.mrpDetails))c.mrpDetails=[];c.mrpDetails=c.mrpDetails.filter(function(m){return m&&typeof m.range==='string'&&m.range.trim()!=='';});c.mrpDetails.forEach(function(m){m.base=sanitizeArray(m.base,l);m.present=sanitizeArray(m.present,l);});if(c.mrpDetails.length>0){c.base=Array(l).fill(0);c.present=Array(l).fill(0);c.mrpDetails.forEach(function(m){m.base.forEach(function(v,i){c.base[i]+=v||0;});m.present.forEach(function(v,i){c.present[i]+=v||0;});});}else{c.base=sanitizeArray(c.base,l);c.present=sanitizeArray(c.present,l);}});}
+function showToast(m){var x=document.getElementById("toast");x.textContent=m;x.className="show";setTimeout(function(){x.className="";},3500);}
+async function saveData(){enforceDataIntegrity();try{localStorage.setItem('subham_inventory',JSON.stringify(inventoryData));localStorage.setItem('subham_stores',JSON.stringify(stores));}catch(e){}if(cloudConnected){var ok=await syncSave();showToast(ok?'✓ Saved to Sheet':'Saved locally (sheet error)');}else{showToast('Saved locally');}}
+
+function loadLocalData(){var sI=localStorage.getItem('subham_inventory'),sS=localStorage.getItem('subham_stores');if(sI&&sS){try{inventoryData=JSON.parse(sI);stores=JSON.parse(sS);if(!Array.isArray(stores)||stores.length===0)stores=[];initPresentArrays(inventoryData);enforceDataIntegrity();}catch(e){inventoryData=[];stores=[];}}else{inventoryData=[];stores=[];}cloudConnected=false;}
+function resetStockData(){if(!confirm('Set ALL Stock to 0?'))return;inventoryData.forEach(function(c){c.present=Array(stores.length).fill(0);c.mrpDetails.forEach(function(m){m.present=Array(stores.length).fill(0);});});enforceDataIntegrity();saveData();render();}
+
+function render(){enforceDataIntegrity();renderMatrix();updateUI();}
+function updateUI(){var co='',bo='',gT=0,gS=0;inventoryData.forEach(function(c,i){co+='<option value="'+i+'">'+c.name+'</option>';c.base.forEach(function(v,s){gT+=v||0;gS+=c.present[s]||0;});});stores.forEach(function(s,i){bo+='<option value="'+i+'">'+s+'</option>';});document.getElementById('totalBase').textContent=gT.toLocaleString();document.getElementById('totalPresent').textContent=gS.toLocaleString();document.getElementById('purchaseSuggestion').textContent=Math.max(0,gT-gS).toLocaleString();document.getElementById('efficiency').textContent=(gT>0?Math.round((gS/gT)*100):0)+'%';document.getElementById('totalCatsCount').textContent=inventoryData.length;document.getElementById('chartFilter').innerHTML=co;document.getElementById('manualBranch').innerHTML='<option value="-1">ALL</option>'+bo;if(!document.getElementById('tabAnalytics').classList.contains('hidden'))refreshCharts();}
+
+function renderMatrix(){var th=document.getElementById('matrixHead'),tb=document.getElementById('tableBody');var h1='<tr><th rowspan="2" class="sticky-col-1 col-cat">Category</th><th rowspan="2" class="sticky-col-2 col-mrp">MRP</th>';stores.forEach(function(s){h1+='<th colspan="2" class="group-header col-data">'+s+'</th>';});h1+='<th rowspan="2" class="sticky-action">AI</th></tr>';var h2='<tr>';stores.forEach(function(){h2+='<th class="sub-header col-data">BS</th><th class="sub-header col-data" style="border-right:1px solid var(--border)">CS</th>';});h2+='</tr>';th.innerHTML=h1+h2;var body='';inventoryData.forEach(function(c,ci){if(c.mrpDetails.length>0){c.mrpDetails.forEach(function(m,mi){var row='<tr><td class="sticky-col-1 col-cat" style="font-size:11px;color:var(--text-muted)">'+c.name+'</td><td class="sticky-col-2 col-mrp"><span class="badge badge-info">'+m.range+'</span></td>';var act='',sur=[],sho=[];stores.forEach(function(sn,si){var t=m.base[si]||0,s=m.present[si]||0;row+='<td class="col-data"><span class="num-target">'+t+'</span></td>';var cls=s>t?'stock-surplus':(s<t?'stock-short':'stock-equal');row+='<td class="col-data" onclick="editStock('+ci+','+mi+','+si+')"><span class="num-stock '+cls+'">'+s+'</span></td>';var d=s-t;if(d>0)sur.push({n:sn,q:d});if(d<0)sho.push({n:sn,q:Math.abs(d)});});if(sur.length&&sho.length){var dn=sur.sort(function(a,b){return b.q-a.q;})[0],rc=sho.sort(function(a,b){return b.q-a.q;})[0],q=Math.min(dn.q,rc.q);act='<span class="badge badge-info">Move '+q+' '+dn.n+'→'+rc.n+'</span>';}else if(sho.length){act='<span class="badge badge-danger">Buy '+sho.reduce(function(a,b){return a+b.q;},0)+'</span>';}else if(sur.length){act='<span class="badge badge-warning">Surplus</span>';}row+='<td class="sticky-action">'+act+'</td></tr>';body+=row;});}var tr='<tr class="total-row"><td class="sticky-col-1 col-cat" style="font-weight:800">'+c.name+'</td><td class="sticky-col-2 col-mrp"><span class="badge badge-warning">TOTAL</span></td>';stores.forEach(function(_,si){var t=c.base[si]||0,s=c.present[si]||0;tr+='<td class="col-data"><span class="num-target">'+t+'</span></td>';var cls=s>t?'stock-surplus':(s<t?'stock-short':'stock-equal');tr+='<td class="col-data" onclick="openModal('+si+')" style="cursor:pointer"><span class="num-stock '+cls+'">'+s+'</span></td>';});tr+='<td class="sticky-action"></td></tr>';body+=tr;});tb.innerHTML=body;}
+function editStock(ci,mi,si){var val=mi===-1?(inventoryData[ci].present[si]||0):(inventoryData[ci].mrpDetails[mi].present[si]||0);var n=prompt("New Stock Value:",val);if(n===null)return;var num=parseInt(n);if(isNaN(num)||num<0)return;if(mi===-1)inventoryData[ci].present[si]=num;else inventoryData[ci].mrpDetails[mi].present[si]=num;enforceDataIntegrity();saveData();render();}
+function refreshCharts(){var cs=document.getElementById('chartFilter');if(!cs)return;var ci=parseInt(cs.value)||0;var cat=inventoryData[ci];if(!cat)return;if(mainChart)mainChart.destroy();var isD=document.body.classList.contains('dark-mode');var tc=isD?'#e6f1ff':'#102a43';mainChart=new Chart(document.getElementById('mainChart'),{type:'bar',data:{labels:stores,datasets:[{label:'Target',data:cat.base.slice(),backgroundColor:'rgba(0,184,148,0.2)',borderColor:'#00b894',borderWidth:2,borderRadius:4},{label:'Stock',data:cat.present.slice(),backgroundColor:'rgba(9,132,227,0.2)',borderColor:'#0984e3',borderWidth:2,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:tc}}},scales:{x:{grid:{display:false},ticks:{color:tc}},y:{beginAtZero:true,ticks:{color:tc}}}}});}
+function switchTab(t,btn){document.querySelectorAll('.tab-content').forEach(function(e){e.classList.add('hidden');});document.querySelectorAll('.tab-btn').forEach(function(e){e.classList.remove('active');});document.getElementById('tab'+t.charAt(0).toUpperCase()+t.slice(1)).classList.remove('hidden');if(btn)btn.classList.add('active');if(t==='analytics')refreshCharts();}
+
+function getCellValue(c){if(c.value===null||c.value===undefined||c.value==='')return null;var v=c.result!==undefined?c.result:c.value;if(typeof v==='object'&&v!==null){if(v instanceof Date)return null;if(v.richText)v=v.richText.map(function(t){return t.text;}).join('').trim();else if(v.text)v=v.text.trim();else return null;}if(typeof v==='string')v=v.trim();if(v==='')return null;return v;}
+function parseNum(v){if(v===null||v===undefined||v==='')return 0;if(typeof v==='number')return isNaN(v)?0:Math.round(v);var s=String(v).replace(/[^0-9.\-]/g,'');var n=parseFloat(s);return isNaN(n)?0:Math.round(n);}
+async function handleFileUpload(e){var f=e.target.files[0];if(!f)return;try{var d=new Uint8Array(await f.arrayBuffer());var wb=new ExcelJS.Workbook();await wb.xlsx.load(d);var ws=wb.worksheets[0];if(!ws)return alert("No worksheet.");var hr=ws.getRow(1);var sm=[];hr.eachCell({includeEmpty:false},function(c,col){if(col<=2)return;var n=getCellValue(c);if(n&&typeof n==='string'&&n.length>0){var u=n.toUpperCase().trim();if(!sm.find(function(s){return s.name===u;}))sm.push({colIdx:col,name:u});}});if(sm.length===0)return alert("No store columns in Row 1.");var matched=0;ws.eachRow({includeEmpty:false},function(row,rn){if(rn===1)return;var cr=getCellValue(row.getCell(1)),mr=getCellValue(row.getCell(2));if(!cr||typeof cr!=='string'||cr.trim()==='')return;var cn=cr.toUpperCase().trim(),mn=(mr&&typeof mr==='string'&&mr.trim()!=='')?mr.toUpperCase().trim():'TOTAL';var ci=-1;for(var x=0;x<inventoryData.length;x++){if(inventoryData[x].name===cn){ci=x;break;}}if(ci===-1)return;var cat=inventoryData[ci];if(mn==='TOTAL'&&cat.mrpDetails.length>0)return;if(mn==='TOTAL'){sm.forEach(function(s){var si=stores.indexOf(s.name);if(si>=0)cat.present[si]=parseNum(getCellValue(row.getCell(s.colIdx)));});matched++;}else{var mrp=null;for(var y=0;y<cat.mrpDetails.length;y++){if(cat.mrpDetails[y].range===mn){mrp=cat.mrpDetails[y];break;}}if(!mrp)return;sm.forEach(function(s){var si=stores.indexOf(s.name);if(si>=0)mrp.present[si]=parseNum(getCellValue(row.getCell(s.colIdx)));});matched++;}});enforceDataIntegrity();saveData();render();alert('Done! '+matched+' rows updated');}catch(err){alert("Error: "+err.message);}e.target.value='';}
+
+function calculateGlobalTransfer(){var tr=[];inventoryData.forEach(function(c){var p=function(iN,mR,bA,pA){var su=[],sh=[];stores.forEach(function(s,i){var d=(pA[i]||0)-(bA[i]||0);if(d>0)su.push({store:s,idx:i,qty:d});if(d<0)sh.push({store:s,idx:i,qty:Math.abs(d)});});su.sort(function(a,b){return b.qty-a.qty;});sh.sort(function(a,b){return b.qty-a.qty;});for(var i=0;i<sh.length;i++){var n=sh[i].qty;for(var j=0;j<su.length;j++){if(n===0)break;if(su[j].qty>0){var q=Math.min(n,su[j].qty);if(q>0){tr.push({category:iN,mrp:mR,from:su[j].store,to:sh[i].store,qty:q});n-=q;su[j].qty-=q;}}}}};if(c.mrpDetails.length>0)c.mrpDetails.forEach(function(m){p(c.name,m.range,m.base,m.present);});else p(c.name,'TOTAL',c.base,c.present);});return tr;}
+
+function buildTransferInflowData(){
+    var tr=calculateGlobalTransfer();
+    var inflowMap={}, sourceMap={}, routeSet=new Set(), catMoveSet=new Set();
+    stores.forEach(function(s){sourceMap[s]={};});
+    tr.forEach(function(t){
+        var k=t.category+'|||'+t.mrp+'|||'+t.to;
+        if(!inflowMap[k])inflowMap[k]={qty:0,sources:[]};
+        inflowMap[k].qty+=t.qty;
+        var es=null;
+        for(var i=0;i<inflowMap[k].sources.length;i++){
+            if(inflowMap[k].sources[i].from===t.from){es=inflowMap[k].sources[i];break;}
+        }
+        if(es)es.qty+=t.qty;
+        else inflowMap[k].sources.push({from:t.from,qty:t.qty});
+        routeSet.add(t.from+' → '+t.to);
+        catMoveSet.add(t.category+'|||'+t.mrp);
+    });
+    var catsWithMoves=0;
+    catMoveSet.forEach(function(){catsWithMoves++;});
+    return {inflowMap:inflowMap, transfers:tr, routesActive:routeSet.size, catsWithMoves:catsWithMoves};
+}
+
+function openTransferReport(){document.getElementById('dashboardView').classList.add('hidden');document.getElementById('transferReportView').classList.remove('hidden');renderTransferReport();}
+function closeTransferReport(){document.getElementById('transferReportView').classList.add('hidden');document.getElementById('dashboardView').classList.remove('hidden');}
+
+function renderTransferReport(){
+    var data=buildTransferInflowData();
+    var gt=data.transfers.reduce(function(s,t){return s+t.qty;},0);
+    document.getElementById('reportTotalTransfer').textContent=gt.toLocaleString();
+    document.getElementById('reportSavedPurchase').textContent=gt.toLocaleString();
+    document.getElementById('reportCatMoves').textContent=data.catsWithMoves;
+    document.getElementById('reportRoutesActive').textContent=data.routesActive;
+
+    /* Build header — same dual-row style as stock matrix */
+    var h1='<tr><th rowspan="2" class="sticky-col-1 col-cat">Category</th><th rowspan="2" class="sticky-col-2 col-mrp">MRP</th>';
+    stores.forEach(function(s){
+        h1+='<th colspan="2" class="group-header col-data" style="background:linear-gradient(135deg,var(--info),#0077b6)">'+s+'</th>';
+    });
+    h1+='<th rowspan="2" class="sticky-action" style="min-width:110px;background:linear-gradient(135deg,var(--info),#0077b6);color:#fff">TOTAL</th></tr>';
+    var h2='<tr>';
+    stores.forEach(function(){
+        h2+='<th class="sub-header col-data" style="background:rgba(9,132,227,.05);color:var(--info);border-bottom:2px solid var(--info)">GAP</th>';
+        h2+='<th class="sub-header col-data" style="background:rgba(9,132,227,.05);color:var(--info);border-bottom:2px solid var(--info)">INFLOW</th>';
+    });
+    h2+='</tr>';
+    document.getElementById('transferTableHead').innerHTML=h1+h2;
+
+    var bh='', gps=Array(stores.length).fill(0);
+
+    inventoryData.forEach(function(cat){
+        var mrList=cat.mrpDetails.length>0?cat.mrpDetails.map(function(m){return m.range;}):['TOTAL'];
+        var catInflowTotal=Array(stores.length).fill(0);
+        var hasAnyMove=false;
+
+        mrList.forEach(function(mrpRange){
+            var gaps=stores.map(function(_,i){
+                if(cat.mrpDetails.length>0){
+                    var m=null;
+                    for(var y=0;y<cat.mrpDetails.length;y++){if(cat.mrpDetails[y].range===mrpRange){m=cat.mrpDetails[y];break;}}
+                    return m?((m.present[i]||0)-(m.base[i]||0)):0;
+                }else return (cat.present[i]||0)-(cat.base[i]||0);
+            });
+
+            var inflows=stores.map(function(s){
+                var k=cat.name+'|||'+mrpRange+'|||'+s;
+                return data.inflowMap[k]?data.inflowMap[k].qty:0;
+            });
+
+            var rowInflowTotal=inflows.reduce(function(a,b){return a+b;},0);
+            if(cat.mrpDetails.length>0 && rowInflowTotal===0 && inflows.every(function(v){return v===0;}) && gaps.every(function(g){return g>=0;}))return;
+
+            if(rowInflowTotal>0)hasAnyMove=true;
+            var isOnlyTotal=mrList.length===1&&!cat.mrpDetails.length;
+
+            var rh='';
+            if(isOnlyTotal){
+                rh='<tr class="total-row">';
+                rh+='<td class="sticky-col-1 col-cat" style="font-weight:800">'+cat.name+'</td>';
+                rh+='<td class="sticky-col-2 col-mrp"><span class="badge badge-warning">TOTAL</span></td>';
+            } else {
+                rh='<tr>';
+                rh+='<td class="sticky-col-1 col-cat" style="font-size:11px;color:var(--text-muted)">'+cat.name+'</td>';
+                rh+='<td class="sticky-col-2 col-mrp"><span class="badge badge-info">'+mrpRange+'</span></td>';
+            }
+
+            stores.forEach(function(s,si){
+                catInflowTotal[si]+=inflows[si];
+                gps[si]+=inflows[si];
+
+                /* GAP cell */
+                var g=gaps[si];
+                var gapPrefix=g>0?'+':'';
+                if(g===0){
+                    rh+='<td class="col-data"><span class="zero-dash">—</span></td>';
+                } else {
+                    var gapCls=g>0?'tf-gap-cell':'tf-gap-cell';
+                    rh+='<td class="col-data"><span class="'+gapCls+'" style="'+(g<0?'color:var(--danger);border-color:rgba(214,48,49,.25);background:rgba(214,48,49,.06)':'')+'">'+gapPrefix+g+'</span></td>';
+                }
+
+                /* INFLOW cell */
+                if(inflows[si]>0){
+                    var k=cat.name+'|||'+mrpRange+'|||'+s;
+                    var srcInfo=data.inflowMap[k];
+                    var srcHtml='';
+                    if(srcInfo&&srcInfo.sources.length>0){
+                        srcInfo.sources.forEach(function(src){
+                            if(src.qty>0) srcHtml+='<span class="tf-source-tag">'+src.from+': '+src.qty+'</span>';
+                        });
+                    }
+                    rh+='<td class="col-data" style="padding:4px 3px"><span class="tf-inflow-cell">'+inflows[si]+'</span>'+srcHtml+'</td>';
+                } else {
+                    rh+='<td class="col-data"><span class="zero-dash">—</span></td>';
+                }
+            });
+
+            var totalCls=isOnlyTotal?'transfer-total-val':'transfer-inflow-val';
+            rh+=rowInflowTotal>0?'<td class="sticky-action"><span class="'+totalCls+'">'+rowInflowTotal+'</span></td>':'<td class="sticky-action"><span class="zero-dash">—</span></td>';
+            rh+='</tr>';
+            bh+=rh;
+        });
+
+        /* Category TOTAL row */
+        if(cat.mrpDetails.length>0){
+            var ct=catInflowTotal.reduce(function(a,b){return a+b;},0);
+            var th='<tr class="total-row"><td class="sticky-col-1 col-cat" style="font-weight:800">'+cat.name+'</td><td class="sticky-col-2 col-mrp"><span class="badge badge-warning">TOTAL</span></td>';
+            stores.forEach(function(_,si){
+                th+=catInflowTotal[si]>0?'<td class="col-data"><span class="zero-dash">—</span></td><td class="col-data"><span class="tf-inflow-cell" style="font-size:13px">'+catInflowTotal[si]+'</span></td>':'<td class="col-data"><span class="zero-dash">—</span></td><td class="col-data"><span class="zero-dash">—</span></td>';
+            });
+            th+=ct>0?'<td class="sticky-action"><span class="transfer-total-val">'+ct+'</span></td>':'<td class="sticky-action"><span class="zero-dash">—</span></td>';
+            th+='</tr>';
+            bh+=th;
+        }
+    });
+
+    /* GRAND TOTAL row */
+    var gc=gps.reduce(function(a,b){return a+b;},0);
+    bh+='<tr class="grand-total-row"><td class="sticky-col-1 col-cat" style="font-size:14px">GRAND TOTAL</td><td class="sticky-col-2 col-mrp"></td>';
+    gps.forEach(function(p){
+        bh+='<td class="col-data"></td>';
+        bh+='<td class="col-data"><span class="transfer-total-val" style="font-size:13px">'+p+'</span></td>';
+    });
+    bh+='<td class="sticky-action"><span class="transfer-total-val" style="font-size:16px;border:2px solid var(--info)">'+gc+'</span></td></tr>';
+
+    if(bh===''){
+        bh='<tr><td colspan="'+(4+stores.length*2)+'" style="text-align:center;padding:60px 20px"><p style="font-size:18px;font-weight:800;color:var(--info)">NO TRANSFERS REQUIRED</p><p style="font-size:13px;color:var(--text-muted);margin-top:12px">All stores are balanced or every shortage has no matching surplus.</p></td></tr>';
+    }
+
+    document.getElementById('transferTableBody').innerHTML=bh;
+}
+
+function getSimulatedPurchaseData(){var si=JSON.parse(JSON.stringify(inventoryData));var tr=calculateGlobalTransfer();tr.forEach(function(t){var c=null;for(var x=0;x<si.length;x++){if(si[x].name===t.category){c=si[x];break;}}if(!c)return;var fi=stores.indexOf(t.from),ti=stores.indexOf(t.to);if(fi<0||ti<0)return;if(c.mrpDetails.length>0){var m=null;for(var y=0;y<c.mrpDetails.length;y++){if(c.mrpDetails[y].range===t.mrp){m=c.mrpDetails[y];break;}}if(m){m.present[fi]=Math.max(0,(m.present[fi]||0)-t.qty);m.present[ti]=(m.present[ti]||0)+t.qty;}}else{c.present[fi]=Math.max(0,(c.present[fi]||0)-t.qty);c.present[ti]=(c.present[ti]||0)+t.qty;}});si.forEach(function(c){if(c.mrpDetails.length>0){c.base.fill(0);c.present.fill(0);c.mrpDetails.forEach(function(m){m.base.forEach(function(v,i){c.base[i]+=v||0;});m.present.forEach(function(v,i){c.present[i]+=v||0;});});}});return si;}
+function openPurchaseReport(){document.getElementById('dashboardView').classList.add('hidden');document.getElementById('purchaseReportView').classList.remove('hidden');renderPurchaseReport();}
+function closePurchaseReport(){document.getElementById('purchaseReportView').classList.add('hidden');document.getElementById('dashboardView').classList.remove('hidden');}
+function renderPurchaseReport(){var sd=getSimulatedPurchaseData();var gt=0;var ct={};var as=new Set();var hh='<tr><th class="sticky-col-1 col-cat">Category</th><th class="sticky-col-2 col-mrp">MRP</th>';stores.forEach(function(s){hh+='<th class="col-store">'+s+'</th>';});hh+='<th class="sticky-action" style="min-width:100px">TOTAL</th></tr>';document.getElementById('purchaseTableHead').innerHTML=hh;var bh='',gps=Array(stores.length).fill(0);inventoryData.forEach(function(cat,ci){var sc=sd[ci];var mr=[];if(sc.mrpDetails.length>0)sc.mrpDetails.forEach(function(m){mr.push({range:m.range,purchases:stores.map(function(_,i){return Math.max(0,(m.base[i]||0)-(m.present[i]||0));})});});else mr.push({range:'TOTAL',p:stores.map(function(_,i){return Math.max(0,(sc.base[i]||0)-(sc.present[i]||0));})});var cp=stores.map(function(_,i){return mr.reduce(function(s,r){return s+r.p[i];},0);});var catTotal=cp.reduce(function(a,b){return a+b;},0);if(catTotal>0)ct[cat.name]=catTotal;gt+=catTotal;stores.forEach(function(s,i){if(cp[i]>0)as.add(s);gps[i]+=cp[i];});var hm=sc.mrpDetails.length>0;mr.forEach(function(row){var rt=row.p.reduce(function(a,b){return a+b;},0);var io=mr.length===1&&!hm;if(hm&&rt===0)return;var rh='';if(io)rh='<tr class="total-row"><td class="sticky-col-1 col-cat" style="font-weight:800">'+cat.name+'</td><td class="sticky-col-2 col-mrp"><span class="badge badge-warning">TOTAL</span></td>';else rh='<tr><td class="sticky-col-1 col-cat" style="font-size:11px;color:var(--text-muted)">'+cat.name+'</td><td class="sticky-col-2 col-mrp"><span class="badge badge-info">'+row.range+'</span></td>';row.purchases.forEach(function(p){rh+=p>0?'<td class="col-store"><span class="purchase-matrix-val">'+p+'</span></td>':'<td class="col-store"><span class="zero-dash">—</span></td>';});rh+=rt>0?'<td class="sticky-action"><span class="'+(io?'purchase-total-val':'purchase-matrix-val')+'">'+rt+'</span></td>':'<td class="sticky-action"><span class="zero-dash">—</span></td>';rh+='</tr>';bh+=rh;});if(hm){var th='<tr class="total-row"><td class="sticky-col-1 col-cat" style="font-weight:800">'+cat.name+'</td><td class="sticky-col-2 col-mrp"><span class="badge badge-warning">TOTAL</span></td>';cp.forEach(function(p){th+=p>0?'<td class="col-store"><span class="purchase-matrix-val" style="font-size:13px">'+p+'</span></td>':'<td class="col-store"><span class="zero-dash">—</span></td>';});th+=catTotal>0?'<td class="sticky-action"><span class="purchase-total-val">'+catTotal+'</span></td>':'<td class="sticky-action"><span class="zero-dash">—</span></td>';th+='</tr>';bh+=th;}});bh+='<tr class="grand-total-row"><td class="sticky-col-1 col-cat" style="font-size:14px">GRAND TOTAL</td><td class="sticky-col-2 col-mrp"></td>';gps.forEach(function(p){bh+='<td class="col-store"><span class="purchase-total-val" style="font-size:13px">'+p+'</span></td>';});bh+='<td class="sticky-action"><span class="purchase-total-val" style="font-size:16px;border:2px solid var(--danger)">'+gt+'</span></td></tr>';document.getElementById('purchaseTableBody').innerHTML=bh;document.getElementById('reportTotalPurchase').textContent=gt.toLocaleString();document.getElementById('reportStoresAffected').textContent=as.size;var sorted=Object.entries(ct).sort(function(a,b){return b[1]-a[1];}).slice(0,5);if(purchaseSummaryChart)purchaseSummaryChart.destroy();purchaseSummaryChart=new Chart(document.getElementById('purchaseSummaryChart'),{type:'bar',data:{labels:sorted.map(function(c){return c[0].length>20?c[0].substring(0,18)+'..':c[0];}),datasets:[{label:'Purchase',data:sorted.map(function(c){return c[1];}),backgroundColor:'#d63031',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}},indexAxis:'y'}});}
+
+async function exportTransferExcel(){
+    var data=buildTransferInflowData();
+    var wb=new ExcelJS.Workbook();
+    var ws=wb.addWorksheet('Transfer');
+    var cols=[{width:28},{width:18}];
+    stores.forEach(function(){cols.push({width:10},{width:12});});
+    cols.push({width:12});
+    ws.columns=cols;
+
+    /* Header row 1 - merged store names */
+    var r1=ws.getRow(1);r1.height=28;
+    r1.getCell(1).value='Category';r1.getCell(2).value='MRP';
+    ws.mergeCells(1,1,2,1);ws.mergeCells(1,2,2,2);
+    var ci2=3;
+    stores.forEach(function(s){
+        r1.getCell(ci2).value=s;
+        ws.mergeCells(1,ci2,1,ci2+1);
+        ci2+=2;
+    });
+    r1.getCell(ci2).value='TOTAL';ws.mergeCells(1,ci2,2,ci2);
+    r1.eachCell(function(c){
+        c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF0984E3'}};
+        c.font={bold:true,color:{argb:'FFFFFFFF'},size:11};
+        c.alignment={horizontal:'center',vertical:'middle'};
+    });
+
+    /* Header row 2 - GAP / INFLOW */
+    var r2=ws.getRow(2);
+    var c3=3;
+    stores.forEach(function(){
+        r2.getCell(c3).value='GAP';
+        r2.getCell(c3+1).value='INFLOW';
+        [c3,c3+1].forEach(function(i){
+            var cl=r2.getCell(i);
+            cl.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFDBEAFE'}};
+            cl.font={bold:true,color:{argb:'FF0077B6'},size:9};
+            cl.alignment={horizontal:'center'};
+        });
+        c3+=2;
+    });
+
+    var cr=3, gps=Array(stores.length).fill(0);
+    inventoryData.forEach(function(cat){
+        var mrList=cat.mrpDetails.length>0?cat.mrpDetails.map(function(m){return m.range;}):['TOTAL'];
+        var catInflow=Array(stores.length).fill(0);
+
+        mrList.forEach(function(mrpRange){
+            var gaps=stores.map(function(_,i){
+                if(cat.mrpDetails.length>0){
+                    var m=null;for(var y=0;y<cat.mrpDetails.length;y++){if(cat.mrpDetails[y].range===mrpRange){m=cat.mrpDetails[y];break;}}
+                    return m?((m.present[i]||0)-(m.base[i]||0)):0;
+                }else return (cat.present[i]||0)-(cat.base[i]||0);
+            });
+            var inflows=stores.map(function(s){
+                var k=cat.name+'|||'+mrpRange+'|||'+s;
+                return data.inflowMap[k]?data.inflowMap[k].qty:0;
+            });
+            var rowTotal=inflows.reduce(function(a,b){return a+b;},0);
+            if(cat.mrpDetails.length>0 && rowTotal===0 && gaps.every(function(g){return g>=0;}))return;
+
+            var isOnlyTotal=mrList.length===1&&!cat.mrpDetails.length;
+            var er=ws.getRow(cr);
+            er.getCell(1).value=cat.name;
+            er.getCell(2).value=isOnlyTotal?'TOTAL':mrpRange;
+            if(isOnlyTotal){er.getCell(1).font={bold:true};er.getCell(2).font={bold:true};}
+
+            var dc=3;
+            stores.forEach(function(_,si){
+                catInflow[si]+=inflows[si];gps[si]+=inflows[si];
+                /* GAP */
+                var g=gaps[si];
+                var gapCell=er.getCell(dc);
+                if(g!==0){gapCell.value=g;gapCell.font={name:'Consolas',size:10};gapCell.alignment={horizontal:'center'};}
+                /* INFLOW */
+                var infCell=er.getCell(dc+1);
+                if(inflows[si]>0){
+                    infCell.value=inflows[si];
+                    infCell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFDBEAFE'}};
+                    infCell.font={name:'Consolas',size:10,bold:true,color:{argb:'FF0077B6'}};
+                    infCell.alignment={horizontal:'center'};
+                    /* Add source info as comment */
+                    var k=cat.name+'|||'+mrpRange+'|||'+stores[si];
+                    var srcInfo=data.inflowMap[k];
+                    if(srcInfo&&srcInfo.sources.length>0){
+                        var note='From: '+srcInfo.sources.map(function(s){return s.from+'('+s.qty+')';}).join(', ');
+                        infCell.note=note;
+                    }
+                }
+                dc+=2;
+            });
+            var tc=er.getCell(dc);
+            tc.value=rowTotal;
+            if(rowTotal>0){
+                tc.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF0984E3'}};
+                tc.font={name:'Consolas',size:10,bold:true,color:{argb:'FFFFFFFF'}};
+                tc.alignment={horizontal:'center'};
+            }
+            cr++;
+        });
+
+        if(cat.mrpDetails.length>0){
+            var ct=catInflow.reduce(function(a,b){return a+b;},0);
+            var tr=ws.getRow(cr);
+            tr.getCell(1).value=cat.name;tr.getCell(2).value='TOTAL';
+            tr.getCell(1).font={bold:true};tr.getCell(2).font={bold:true};
+            tr.getCell(1).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFE0F2F1'}};
+            tr.getCell(2).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFE0F2F1'}};
+            var dc=3;
+            stores.forEach(function(_,si){
+                tr.getCell(dc).value='—';
+                var infCell=tr.getCell(dc+1);
+                if(catInflow[si]>0){
+                    infCell.value=catInflow[si];
+                    infCell.font={name:'Consolas',size:10,bold:true,color:{argb:'FF0077B6'}};
+                    infCell.alignment={horizontal:'center'};
+                }
+                dc+=2;
+            });
+            var tc=tr.getCell(dc);
+            tc.value=ct;
+            if(ct>0){
+                tc.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF0984E3'}};
+                tc.font={name:'Consolas',size:11,bold:true,color:{argb:'FFFFFFFF'}};
+                tc.alignment={horizontal:'center'};
+            }
+            cr++;
+        }
+    });
+
+    /* Grand total */
+    var gt=gps.reduce(function(a,b){return a+b;},0);
+    var gr=ws.getRow(cr);
+    gr.getCell(1).value='GRAND TOTAL';
+    gr.getCell(1).font={bold:true,size:12,color:{argb:'FFFFFFFF'}};
+    gr.getCell(1).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF0077B6'}};
+    var dc=3;
+    stores.forEach(function(_,si){
+        gr.getCell(dc).value='—';
+        gr.getCell(dc).font={bold:true,color:{argb:'FFFFFFFF'}};
+        gr.getCell(dc).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF0077B6'}};
+        var c=gr.getCell(dc+1);
+        c.value=gps[si];
+        c.font={name:'Consolas',size:11,bold:true,color:{argb:'FFFFFFFF'}};
+        c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF0077B6'}};
+        c.alignment={horizontal:'center'};
+        dc+=2;
+    });
+    var gc=gr.getCell(dc);
+    gc.value=gt;
+    gc.font={name:'Consolas',size:12,bold:true,color:{argb:'FFFFFFFF'}};
+    gc.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF0077B6'}};
+    gc.alignment={horizontal:'center'};
+
+    var buf=await wb.xlsx.writeBuffer();
+    saveAs(new Blob([buf]),'Transfer_Matrix.xlsx');
+}
+
+async function exportSmartPurchaseExcel(){var sd=getSimulatedPurchaseData();var wb=new ExcelJS.Workbook();var ws=wb.addWorksheet('Purchase');var cols=[{width:28},{width:18}];stores.forEach(function(){cols.push({width:10});});cols.push({width:12});ws.columns=cols;var r1=ws.getRow(1);r1.getCell(1).value='Category';r1.getCell(2).value='MRP';stores.forEach(function(s,i){r1.getCell(3+i).value=s;});r1.getCell(3+stores.length).value='TOTAL';r1.eachCell(function(c){c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFDC2626'}};c.font={bold:true,color:{argb:'FFFFFFFF'},size:11};});var cr=2,gt=0,gps=Array(stores.length).fill(0);inventoryData.forEach(function(cat,ci){var sc=sd[ci];var mr=[];if(sc.mrpDetails.length>0)sc.mrpDetails.forEach(function(m){mr.push({range:m.range,p:stores.map(function(_,i){return Math.max(0,(m.base[i]||0)-(m.present[i]||0));})});});else mr.push({range:'TOTAL',p:stores.map(function(_,i){return Math.max(0,(sc.base[i]||0)-(sc.present[i]||0));})});var cp=stores.map(function(_,i){return mr.reduce(function(s,r){return s+r.p[i];},0);});var ct=cp.reduce(function(a,b){return a+b;},0);gt+=ct;stores.forEach(function(_,i){gps[i]+=cp[i];});var hm=sc.mrpDetails.length>0;mr.forEach(function(row){var rt=row.p.reduce(function(a,b){return a+b;},0);if(hm&&rt===0)return;var er=ws.getRow(cr);er.getCell(1).value=cat.name;er.getCell(2).value=mr.length===1&&!hm?'TOTAL':row.range;stores.forEach(function(_,i){var c=er.getCell(3+i);c.value=row.p[i]||0;if(row.p[i]>0){c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFECACA'}};c.font={name:'Consolas',size:10,bold:true,color:{argb:'FFDC2626'}};}});var tc=er.getCell(3+stores.length);tc.value=rt;if(rt>0){tc.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFDC2626'}};tc.font={name:'Consolas',size:10,bold:true,color:{argb:'FFFFFFFF'}};}cr++;});if(hm){var tr=ws.getRow(cr);tr.getCell(1).value=cat.name;tr.getCell(2).value='TOTAL';tr.getCell(1).font={bold:true};tr.getCell(2).font={bold:true};stores.forEach(function(_,i){var c=tr.getCell(3+i);c.value=cp[i];if(cp[i]>0)c.font={name:'Consolas',size:10,bold:true,color:{argb:'FFDC2626'}};});var tc=tr.getCell(3+stores.length);tc.value=ct;if(ct>0){tc.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFDC2626'}};tc.font={name:'Consolas',size:11,bold:true,color:{argb:'FFFFFFFF'}};}cr++;}});var gr=ws.getRow(cr);gr.getCell(1).value='GRAND TOTAL';gr.getCell(1).font={bold:true,size:12,color:{argb:'FFFFFFFF'}};gr.getCell(1).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFB91C1C'}};stores.forEach(function(_,i){var c=gr.getCell(3+i);c.value=gps[i];c.font={name:'Consolas',size:11,bold:true,color:{argb:'FFFFFFFF'}};c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFB91C1C'}};});var gc=gr.getCell(3+stores.length);gc.value=gt;gc.font={name:'Consolas',size:12,bold:true,color:{argb:'FFFFFFFF'}};gc.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFB91C1C'}};var buf=await wb.xlsx.writeBuffer();saveAs(new Blob([buf]),'Purchase_Matrix.xlsx');}
+
+function openModal(si){currentModalBranchIndex=si;var nm=stores[si];var labels=[],tgts=[],stks=[];var tT=0,tS=0,rows='';inventoryData.forEach(function(c){var t=c.base[si]||0,s=c.present[si]||0;if(t>0||s>0){tT+=t;tS+=s;labels.push(c.name.substring(0,15));tgts.push(t);stks.push(s);var g=s-t;var b=g<0?'<span class="badge badge-danger">Buy '+Math.abs(g)+'</span>':(g>0?'<span class="badge badge-warning">Surplus</span>':'<span class="badge badge-success">OK</span>');rows+='<div class="card p-4 mb-2" style="border-left:4px solid '+(g<0?'var(--danger)':'var(--success)')+'"><div class="flex justify-between text-xs uppercase mb-1" style="color:var(--text-muted)"><span>'+c.name+'</span><span>Gap: '+(g>0?'+':'')+g+'</span></div><div class="flex justify-between items-center"><div class="mono text-xs">T: '+t+' | S: '+s+'</div><div>'+b+'</div></div></div>';}});document.getElementById('modalBody').innerHTML='<div style="height:250px;margin-bottom:20px;position:relative"><canvas id="branchModalChart"></canvas></div><div class="grid grid-cols-2 gap-4 mb-6 text-center"><div class="p-4 rounded-xl" style="background:var(--bg)"><p class="text-xs uppercase font-bold" style="color:var(--text-muted)">Target</p><p class="text-2xl font-extrabold mono">'+tT+'</p></div><div class="p-4 rounded-xl" style="background:var(--info);color:white"><p class="text-xs uppercase font-bold opacity-80">Stock</p><p class="text-2xl font-extrabold mono">'+tS+'</p></div></div><h3 class="font-bold text-sm mb-3 uppercase tracking-wider" style="color:var(--text-muted)">Breakdown</h3><div>'+rows+'</div>';document.getElementById('modalStore').textContent=nm+' Analysis';document.getElementById('modal').classList.remove('hidden');if(branchModalChart)branchModalChart.destroy();branchModalChart=new Chart(document.getElementById('branchModalChart'),{type:'bar',data:{labels:labels,datasets:[{label:'Target',data:tgts,backgroundColor:'#00b894',borderRadius:4},{label:'Stock',data:stks,backgroundColor:'#0984e3',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top'}},scales:{x:{grid:{display:false}},y:{beginAtZero:true}}}});}
+function closeModal(){document.getElementById('modal').classList.add('hidden');}
+function addBr(){if(cloudConnected){showToast('Cannot add — connected to Sheet');return;}var n=document.getElementById('newBr').value.trim().toUpperCase();if(!n||stores.includes(n))return alert('Empty or duplicate');stores.push(n);inventoryData.forEach(function(c){while(c.base.length<stores.length)c.base.push(0);while(c.present.length<stores.length)c.present.push(0);c.mrpDetails.forEach(function(m){while(m.base.length<stores.length)m.base.push(0);while(m.present.length<stores.length)m.present.push(0);});});enforceDataIntegrity();saveData();render();document.getElementById('newBr').value='';showToast('Branch added');}
+function updateMrpOptions(){var n=document.getElementById('manualCatInput').value.toUpperCase().trim();var l=document.getElementById('mrpList');l.innerHTML='<option value="TOTAL">TOTAL</option>';if(!n)return;var c=null;for(var i=0;i<inventoryData.length;i++){if(inventoryData[i].name===n){c=inventoryData[i];break;}}if(c&&c.mrpDetails)c.mrpDetails.forEach(function(m){var o=document.createElement('option');o.value=m.range;o.textContent=m.range;l.appendChild(o);});}
+function saveManualData(){var nm=document.getElementById('manualCatInput').value.toUpperCase().trim(),mr=document.getElementById('manualMrp').value.trim(),si=parseInt(document.getElementById('manualBranch').value),st=parseInt(document.getElementById('manualStock').value)||0;if(!nm||!mr||isNaN(si))return alert('Fill all fields');var idx=-1;for(var i=0;i<inventoryData.length;i++){if(inventoryData[i].name===nm){idx=i;break;}}if(idx===-1){showToast('Category not found');return;}var c=inventoryData[idx];if(si===-1){if(mr.toUpperCase()==='TOTAL'){for(var i=0;i<stores.length;i++)c.present[i]=st;}else{var r=null;for(var j=0;j<c.mrpDetails.length;j++){if(c.mrpDetails[j].range===mr){r=c.mrpDetails[j];break;}}if(!r){showToast('MRP not found');return;}for(var i=0;i<stores.length;i++)r.present[i]=st;}}else{if(mr.toUpperCase()==='TOTAL')c.present[si]=st;else{var r=null;for(var j=0;j<c.mrpDetails.length;j++){if(c.mrpDetails[j].range===mr){r=c.mrpDetails[j];break;}}if(!r){showToast('MRP not found');return;}r.present[si]=st;}}enforceDataIntegrity();closeManualModal();saveData();render();}
+async function exportBranchReport(){if(currentModalBranchIndex===null)return;var si=currentModalBranchIndex,nm=stores[si];var wb=new ExcelJS.Workbook();var ws=wb.addWorksheet(nm);ws.columns=[{width:25},{width:10},{width:10},{width:30}];ws.addRow(['Report: '+nm]);ws.addRow(['Category','Target','Stock','Action']);inventoryData.forEach(function(c){var p=Math.max(0,(c.base[si]||0)-(c.present[si]||0));ws.addRow([c.name,c.base[si]||0,c.present[si]||0,p>0?'Buy '+p:'OK']);});var buf=await wb.xlsx.writeBuffer();saveAs(new Blob([buf]),nm+'_Report.xlsx');}
+async function exportMatrixExcel(){var wb=new ExcelJS.Workbook();var ws=wb.addWorksheet('Stock Matrix');var cols=[{width:25},{width:15}];stores.forEach(function(){cols.push({width:8},{width:8});});cols.push({width:20});ws.columns=cols;var r1=ws.getRow(1);r1.getCell(1).value='Category';r1.getCell(2).value='MRP';var ci2=3;stores.forEach(function(s){r1.getCell(ci2).value=s;ws.mergeCells(1,ci2,1,ci2+1);ci2+=2;});r1.getCell(ci2).value='AI';r1.eachCell(function(c){c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF00B894'}};c.font={bold:true,color:{argb:'FFFFFFFF'},size:12};c.alignment={horizontal:'center',vertical:'middle'};});ws.mergeCells(1,1,2,1);ws.mergeCells(1,2,2,2);ws.mergeCells(1,ci2,2,ci2);var r2=ws.getRow(2);var c3=3;stores.forEach(function(){r2.getCell(c3).value='Tgt';r2.getCell(c3+1).value='Stk';[c3,c3+1].forEach(function(i){var cl=r2.getCell(i);cl.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFE0F2F1'}};cl.font={bold:true,color:{argb:'FF00B894'},size:10};cl.alignment={horizontal:'center'};});c3+=2;});var cr=3;inventoryData.forEach(function(cat){if(cat.mrpDetails.length>0)cat.mrpDetails.forEach(function(mrp){var row=ws.getRow(cr);row.getCell(1).value=cat.name;row.getCell(2).value=mrp.range;var dc=3;stores.forEach(function(_,si){row.getCell(dc).value=mrp.base[si]||0;var sc=row.getCell(dc+1);sc.value=mrp.present[si]||0;sc.alignment={horizontal:'center'};sc.font={bold:true,name:'Consolas',size:10};var g=(mrp.present[si]||0)-(mrp.base[si]||0);sc.fill={type:'pattern',pattern:'solid',fgColor:{argb:g>0?'FFFECACA':g<0?'FFBBF7D0':'FFBFDBFE'}};dc+=2;});cr++;});var tr=ws.getRow(cr);tr.getCell(1).value=cat.name;tr.getCell(2).value='TOTAL';tr.getCell(1).font={bold:true};tr.getCell(2).font={bold:true};tr.getCell(1).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFE0F2F1'}};tr.getCell(2).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFE0F2F1'}};var dc=3;stores.forEach(function(_,si){tr.getCell(dc).value=cat.base[si]||0;var sc=tr.getCell(dc+1);sc.value=cat.present[si]||0;sc.alignment={horizontal:'center'};sc.font={bold:true,name:'Consolas',size:10};var g=(cat.present[si]||0)-(cat.base[si]||0);sc.fill={type:'pattern',pattern:'solid',fgColor:{argb:g>0?'FFFECACA':g<0?'FFBBF7D0':'FFBFDBFE'}};dc+=2;});cr++;});var buf=await wb.xlsx.writeBuffer();saveAs(new Blob([buf]),'Stock_Matrix.xlsx');}
+function toggleTheme(){document.body.classList.toggle('dark-mode');render();}
+function openManualModal(){render();document.getElementById('manualModal').classList.remove('hidden');}
+function closeManualModal(){document.getElementById('manualModal').classList.add('hidden');}
+
+window.onload=async function(){
+    dbg('=== PAGE LOADED ===');
+    dbg('URL: ' + (API_URL ? API_URL.substring(0, 60) + '...' : 'EMPTY'));
+    updateSyncUI();
+    var ok = await syncLoad();
+    if(ok){
+        dbg('SUCCESS! Rendering...');
+        render();
+        showToast('✓ Connected! ' + stores.length + ' stores, ' + inventoryData.length + ' categories');
+        setTimeout(function(){document.getElementById('debugLog').style.display='none';}, 5000);
+    } else {
+        dbg('FAILED. Loading local data...');
+        loadLocalData();
+        if(inventoryData.length > 0){
+            render();
+            showToast('Cloud failed — using ' + inventoryData.length + ' local categories');
+        } else {
+            document.getElementById('tableBody').innerHTML = '<tr><td colspan="50" style="text-align:center;padding:60px 20px"><p style="font-size:18px;font-weight:800;color:var(--danger)">Could not connect to Google Sheet</p><p style="font-size:13px;color:var(--text-muted);margin-top:12px">Check the debug log (bottom-right corner) for errors.</p><p style="font-size:12px;color:var(--text-muted);margin-top:8px">Common fixes:<br>1. Re-deploy script as Web App (Execute as: Me, Access: Anyone)<br>2. Wait 30 seconds after deploying<br>3. Open the deployment URL in browser first to authorize</p></td></tr>';
+        }
+        setTimeout(function(){document.getElementById('debugLog').style.display='none';}, 15000);
+    }
+};
+</script>
+</body>
+</html>
