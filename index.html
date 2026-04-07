@@ -239,30 +239,23 @@ function updateSyncUI(){
 
 function updateActionsLock(locked){
     var card=document.getElementById('addBranchCard'),txt=document.getElementById('actionsLockText');
-    if(!card)return;
-    var inp=card.querySelector('input'),btn=card.querySelector('button'),h3=card.querySelector('h3');
+    if(!card)return;var inp=card.querySelector('input'),btn=card.querySelector('button'),h3=card.querySelector('h3');
     if(locked){card.style.opacity='.6';card.style.pointerEvents='none';inp.disabled=true;btn.disabled=true;h3.innerHTML='Add Branch <span class="badge badge-cloud">SHEET LOCKED</span>';txt.innerHTML='<strong>Cloud connected.</strong> Only stock values are editable.';}
     else{card.style.opacity='1';card.style.pointerEvents='auto';inp.disabled=false;btn.disabled=false;h3.innerHTML='Add Branch';txt.innerHTML='Targets, Categories & MRP ranges are fixed. Only stock values are editable.';}
 }
 
 async function googleFetch(url,options){
     dbg('Fetch: '+url.substring(0,70)+'...');
-    try{
-        var opts=Object.assign({redirect:'follow',headers:{'Accept':'application/json','Content-Type':'text/plain'}},options||{});
-        var r=await fetch(url,opts);dbg('Status: '+r.status);
-        if(!r.ok)throw new Error('HTTP '+r.status);
-        var t=await r.text();
-        if(t.indexOf('<!DOCTYPE')>=0||t.indexOf('<html')>=0)throw new Error('Got HTML');
-        return JSON.parse(t);
+    try{var opts=Object.assign({redirect:'follow',headers:{'Accept':'application/json','Content-Type':'text/plain'}},options||{});
+        var r=await fetch(url,opts);dbg('Status: '+r.status);if(!r.ok)throw new Error('HTTP '+r.status);
+        var t=await r.text();if(t.indexOf('<!DOCTYPE')>=0||t.indexOf('<html')>=0)throw new Error('Got HTML');return JSON.parse(t);
     }catch(e){dbg('ERR: '+e.message);throw e;}
 }
 
 async function syncLoad(){
     if(!API_URL)return false;
-    try{isSyncing=true;updateSyncUI();
-        var d=await googleFetch(API_URL+'?action=load&t='+Date.now());
-        if(d.error)throw new Error(d.error);
-        stores=d.stores||[];inventoryData=d.inventory||[];
+    try{isSyncing=true;updateSyncUI();var d=await googleFetch(API_URL+'?action=load&t='+Date.now());
+        if(d.error)throw new Error(d.error);stores=d.stores||[];inventoryData=d.inventory||[];
         initPresentArrays(inventoryData);enforceDataIntegrity();
         try{localStorage.setItem('subham_inventory',JSON.stringify(inventoryData));localStorage.setItem('subham_stores',JSON.stringify(stores));}catch(e){}
         cloudOnline=true;cloudConnected=true;return true;
@@ -289,27 +282,21 @@ function sanitizeArray(a,l){if(!Array.isArray(a))return Array(l).fill(0);var c=[
 
 function initPresentArrays(d){
     if(!d||!Array.isArray(d))return;var l=stores.length;
-    d.forEach(function(c){
-        c.present=sanitizeArray(c.present,l);
-        if(Array.isArray(c.mrpDetails)){
-            c.mrpDetails=c.mrpDetails.filter(function(m){return m&&typeof m.range==='string'&&m.range.trim()!=='';});
-            c.mrpDetails.forEach(function(m){m.base=sanitizeArray(m.base,l);m.present=sanitizeArray(m.present,l);});
-        }else{c.mrpDetails=[];}
+    d.forEach(function(c){c.present=sanitizeArray(c.present,l);
+        if(Array.isArray(c.mrpDetails)){c.mrpDetails=c.mrpDetails.filter(function(m){return m&&typeof m.range==='string'&&m.range.trim()!=='';});c.mrpDetails.forEach(function(m){m.base=sanitizeArray(m.base,l);m.present=sanitizeArray(m.present,l);});}
+        else{c.mrpDetails=[];}
     });
 }
 
 function enforceDataIntegrity(){
-    var l=stores.length;
-    if(!Array.isArray(inventoryData))inventoryData=[];
+    var l=stores.length;if(!Array.isArray(inventoryData))inventoryData=[];
     inventoryData=inventoryData.filter(function(c){return c&&typeof c.name==='string'&&c.name.trim()!=='';});
     inventoryData.forEach(function(c){
         if(!Array.isArray(c.mrpDetails))c.mrpDetails=[];
         c.mrpDetails=c.mrpDetails.filter(function(m){return m&&typeof m.range==='string'&&m.range.trim()!=='';});
         c.mrpDetails.forEach(function(m){m.base=sanitizeArray(m.base,l);m.present=sanitizeArray(m.present,l);});
-        if(c.mrpDetails.length>0){
-            c.base=Array(l).fill(0);c.present=Array(l).fill(0);
-            c.mrpDetails.forEach(function(m){m.base.forEach(function(v,i){c.base[i]+=v||0;});m.present.forEach(function(v,i){c.present[i]+=v||0;});});
-        }else{c.base=sanitizeArray(c.base,l);c.present=sanitizeArray(c.present,l);}
+        if(c.mrpDetails.length>0){c.base=Array(l).fill(0);c.present=Array(l).fill(0);c.mrpDetails.forEach(function(m){m.base.forEach(function(v,i){c.base[i]+=v||0;});m.present.forEach(function(v,i){c.present[i]+=v||0;});});}
+        else{c.base=sanitizeArray(c.base,l);c.present=sanitizeArray(c.present,l);}
     });
 }
 
@@ -333,10 +320,7 @@ function render(){enforceDataIntegrity();renderMatrix();updateUI();}
 
 function updateUI(){
     var co='',bo='',gT=0,gS=0;
-    inventoryData.forEach(function(c,i){
-        co+='<option value="'+i+'">'+c.name+'</option>';
-        c.base.forEach(function(v,s){gT+=v||0;gS+=c.present[s]||0;});
-    });
+    inventoryData.forEach(function(c,i){co+='<option value="'+i+'">'+c.name+'</option>';c.base.forEach(function(v,s){gT+=v||0;gS+=c.present[s]||0;});});
     stores.forEach(function(s,i){bo+='<option value="'+i+'">'+s+'</option>';});
     document.getElementById('totalBase').textContent=gT.toLocaleString();
     document.getElementById('totalPresent').textContent=gS.toLocaleString();
@@ -350,9 +334,7 @@ function updateUI(){
 
 function renderMatrix(){
     var th=document.getElementById('matrixHead'),tb=document.getElementById('tableBody');
-    var hh='<tr>';
-    hh+='<th class="sticky-col-1 col-cat">Category</th>';
-    hh+='<th class="sticky-col-2 col-mrp">MRP</th>';
+    var hh='<tr>';hh+='<th class="sticky-col-1 col-cat">Category</th>';hh+='<th class="sticky-col-2 col-mrp">MRP</th>';
     stores.forEach(function(s,idx){
         var isFirst=(idx===0),isLast=(idx===stores.length-1);
         var bsCls='th-store-cell th-store-bs col-data';if(!isFirst) bsCls+=' th-store-sep';
@@ -360,27 +342,24 @@ function renderMatrix(){
         var csCls='th-store-cell th-store-cs col-data';if(isLast) csCls+=' th-store-cs-last';
         hh+='<th class="'+csCls+'"><div class="th-store-name th-store-name-ghost"></div><div class="th-store-sub">CS</div></th>';
     });
-    hh+='<th class="sticky-action">AI</th></tr>';
-    th.innerHTML=hh;
+    hh+='<th class="sticky-action">AI</th></tr>';th.innerHTML=hh;
     var body='';
     inventoryData.forEach(function(c,ci){
-        if(c.mrpDetails.length>0){
-            c.mrpDetails.forEach(function(m,mi){
-                var row='<tr><td class="sticky-col-1 col-cat" style="font-size:11px;color:var(--text-muted)">'+c.name+'</td><td class="sticky-col-2 col-mrp"><span class="badge badge-info">'+m.range+'</span></td>';
-                var act='',sur=[],sho=[];
-                stores.forEach(function(sn,si){
-                    var t=m.base[si]||0,s=m.present[si]||0;
-                    row+='<td class="col-data"><span class="num-target">'+t+'</span></td>';
-                    var cls=s>t?'stock-surplus':(s<t?'stock-short':'stock-equal');
-                    row+='<td class="col-data" onclick="editStock('+ci+','+mi+','+si+')"><span class="num-stock '+cls+'">'+s+'</span></td>';
-                    var d=s-t;if(d>0)sur.push({n:sn,q:d});if(d<0)sho.push({n:sn,q:Math.abs(d)});
-                });
-                if(sur.length&&sho.length){var dn=sur.sort(function(a,b){return b.q-a.q;})[0],rc=sho.sort(function(a,b){return b.q-a.q;})[0],q=Math.min(dn.q,rc.q);act='<span class="badge badge-info">Move '+q+' '+dn.n+'→'+rc.n+'</span>';}
-                else if(sho.length){act='<span class="badge badge-danger">Buy '+sho.reduce(function(a,b){return a+b.q;},0)+'</span>';}
-                else if(sur.length){act='<span class="badge badge-warning">Surplus</span>';}
-                row+='<td class="sticky-action">'+act+'</td></tr>';body+=row;
+        if(c.mrpDetails.length>0){c.mrpDetails.forEach(function(m,mi){
+            var row='<tr><td class="sticky-col-1 col-cat" style="font-size:11px;color:var(--text-muted)">'+c.name+'</td><td class="sticky-col-2 col-mrp"><span class="badge badge-info">'+m.range+'</span></td>';
+            var act='',sur=[],sho=[];
+            stores.forEach(function(sn,si){
+                var t=m.base[si]||0,s=m.present[si]||0;
+                row+='<td class="col-data"><span class="num-target">'+t+'</span></td>';
+                var cls=s>t?'stock-surplus':(s<t?'stock-short':'stock-equal');
+                row+='<td class="col-data" onclick="editStock('+ci+','+mi+','+si+')"><span class="num-stock '+cls+'">'+s+'</span></td>';
+                var d=s-t;if(d>0)sur.push({n:sn,q:d});if(d<0)sho.push({n:sn,q:Math.abs(d)});
             });
-        }
+            if(sur.length&&sho.length){var dn=sur.sort(function(a,b){return b.q-a.q;})[0],rc=sho.sort(function(a,b){return b.q-a.q;})[0],q=Math.min(dn.q,rc.q);act='<span class="badge badge-info">Move '+q+' '+dn.n+'→'+rc.n+'</span>';}
+            else if(sho.length){act='<span class="badge badge-danger">Buy '+sho.reduce(function(a,b){return a+b.q;},0)+'</span>';}
+            else if(sur.length){act='<span class="badge badge-warning">Surplus</span>';}
+            row+='<td class="sticky-action">'+act+'</td></tr>';body+=row;
+        });}
         var tr='<tr class="total-row"><td class="sticky-col-1 col-cat" style="font-weight:800">'+c.name+'</td><td class="sticky-col-2 col-mrp"><span class="badge badge-warning">TOTAL</span></td>';
         stores.forEach(function(_,si){
             var t=c.base[si]||0,s=c.present[si]||0;
@@ -405,7 +384,9 @@ function refreshCharts(){
 function switchTab(t,btn){document.querySelectorAll('.tab-content').forEach(function(e){e.classList.add('hidden');});document.querySelectorAll('.tab-btn').forEach(function(e){e.classList.remove('active');});document.getElementById('tab'+t.charAt(0).toUpperCase()+t.slice(1)).classList.remove('hidden');if(btn)btn.classList.add('active');if(t==='analytics')refreshCharts();}
 
 /* ================================================================
-   ROBUST EXCEL UPLOAD — handles all MRP formats including 500 > 1000
+   ROBUST EXCEL UPLOAD — handles ALL MRP range formats
+   500-1000, 500 > 1000, 500 < 1000, ₹500>1000,
+   range = 500 < 1000, 500 / 1000, 500 – 1000, etc.
    ================================================================ */
 
 function getCellValue(c){
@@ -433,23 +414,26 @@ function parseNum(v){
 
 function normalizeStr(s){if(s===null||s===undefined)return '';return String(s).trim().toUpperCase();}
 
-// Normalizes MRP: "500 > 1000" → "500-1000", "range = 500 > 1000" → "500-1000"
-// Also handles ₹, spaces, dashes, em-dashes, en-dashes, slashes, commas
+// Normalizes MRP range strings to a canonical format: "500-1000"
+// Handles: 500 > 1000, 500 < 1000, range = 500 > 1000,
+// ₹500<1000, 500 – 1000, 500 / 1000, 500-1000, etc.
 function normalizeMrp(s){
     if(s===null||s===undefined)return '';
     var v=String(s).trim().toUpperCase();
-    // Strip "RANGE =", "RANGE:", "RANGE " prefix
-    v=v.replace(/^RANGE\s*[=:]\s*/i,'').replace(/^RANGE\s+/i,'').trim();
-    // Replace > (with optional spaces) with -
-    v=v.replace(/\s*>\s*/g,'-');
+    // Strip "RANGE =", "RANGE:", "RANGE " prefix (case-insensitive already upper)
+    v=v.replace(/^RANGE\s*[=:]\s*/,'').replace(/^RANGE\s+/,'').trim();
+    // Replace > or < (with optional surrounding spaces) with -
+    v=v.replace(/\s*[><]\s*/g,'-');
     // Replace em-dash, en-dash, slash with -
     v=v.replace(/[–—\/\\]+/g,'-');
-    // Replace multiple dashes with single
+    // Collapse multiple dashes into single
     v=v.replace(/-+/g,'-');
-    // Remove ₹ and commas and extra spaces
-    v=v.replace(/[\u20B9\u09F3,]/g,'').replace(/\s+/g,' ').trim();
+    // Remove ₹ and commas
+    v=v.replace(/[\u20B9\u09F3,]/g,'');
+    // Remove extra spaces
+    v=v.replace(/\s+/g,' ').trim();
     // Strip leading "RANGE" if still there
-    v=v.replace(/^RANGE\s*/i,'').trim();
+    v=v.replace(/^RANGE\s*/,'').trim();
     return v;
 }
 
@@ -471,7 +455,7 @@ function findCategoryIndex(text){
     return -1;
 }
 
-// MRP finder using normalizeMrp — handles "500 > 1000", "₹500-1000", etc.
+// MRP finder using normalizeMrp — handles "500 > 1000", "500 < 1000", etc.
 // Returns -2 for TOTAL, -1 for not found, 0+ for matched index
 function findMrpIndex(catIdx,text){
     if(catIdx<0||text===null||text===undefined)return -1;
@@ -490,8 +474,7 @@ function findMrpIndex(catIdx,text){
 }
 
 function detectHeaderRow(ws){
-    var best=null,bestCount=0;
-    var maxRows=Math.min(20,ws.rowCount||100);
+    var best=null,bestCount=0;var maxRows=Math.min(20,ws.rowCount||100);
     for(var rn=1;rn<=maxRows;rn++){
         var row=ws.getRow(rn);if(!row||row.cellCount===0)continue;
         var info={row:rn,catCol:-1,catColExplicit:false,mrpCol:-1,mrpColExplicit:false,storeCols:[]};
@@ -502,37 +485,17 @@ function detectHeaderRow(ws){
             if(['CATEGORY','CAT','NAME','ITEM','PRODUCT','SAREE','TYPE','DESCRIPTION','PARTICULARS'].indexOf(upper)>=0){info.catCol=col;info.catColExplicit=true;return;}
             if(['MRP','MRP RANGE','RANGE','PRICE RANGE','PRICE','RATE','PRICE BAND'].indexOf(upper)>=0){info.mrpCol=col;info.mrpColExplicit=true;return;}
             var si=findStoreIndex(val);
-            if(si>=0&&!seenStores[si]){
-                seenStores[si]=true;
-                var isCS=/\bCS\b/i.test(val),isBS=/\bBS\b/i.test(val);
-                info.storeCols.push({col:col,storeIdx:si,type:isCS?'cs':(isBS?'bs':'simple')});
-            }
+            if(si>=0&&!seenStores[si]){seenStores[si]=true;var isCS=/\bCS\b/i.test(val),isBS=/\bBS\b/i.test(val);info.storeCols.push({col:col,storeIdx:si,type:isCS?'cs':(isBS?'bs':'simple')});}
         });
         if(info.storeCols.length>bestCount){bestCount=info.storeCols.length;best=info;}
         if(bestCount>=stores.length)break;
     }
     if(!best)return null;
-    // Auto-detect cat column
-    if(!best.catColExplicit){
-        var allNums=true,checkRows=Math.min(best.row+5,(ws.rowCount||100));
-        for(var r=best.row+1;r<=checkRows;r++){var v=getCellValue(ws.getRow(r).getCell(1));if(v===null)continue;if(typeof v==='number')continue;if(typeof v==='string'&&/^\d+$/.test(v.trim()))continue;allNums=false;break;}
-        best.catCol=allNums?2:1;
-    }
-    // Auto-detect MRP column
-    if(!best.mrpColExplicit){
-        var cand=best.catCol+1;
-        if(best.storeCols.some(function(sc){return sc.col===cand;})){best.mrpCol=-1;}
-        else{
-            var mrpLike=0,checkRows2=Math.min(best.row+8,(ws.rowCount||100));
-            for(var r=best.row+1;r<=checkRows2;r++){var v=getCellValue(ws.getRow(r).getCell(cand));if(v!==null&&typeof v==='string'&&/[\d]/.test(v)&&findCategoryIndex(v)<0)mrpLike++;}
-            best.mrpCol=mrpLike>=2?cand:-1;
-        }
-    }
-    // BS/CS: keep CS only; if no CS keep simple; fallback BS
+    if(!best.catColExplicit){var allNums=true,checkRows=Math.min(best.row+5,(ws.rowCount||100));for(var r=best.row+1;r<=checkRows;r++){var v=getCellValue(ws.getRow(r).getCell(1));if(v===null)continue;if(typeof v==='number')continue;if(typeof v==='string'&&/^\d+$/.test(v.trim()))continue;allNums=false;break;}best.catCol=allNums?2:1;}
+    if(!best.mrpColExplicit){var cand=best.catCol+1;if(best.storeCols.some(function(sc){return sc.col===cand;})){best.mrpCol=-1;}else{var mrpLike=0,checkRows2=Math.min(best.row+8,(ws.rowCount||100));for(var r=best.row+1;r<=checkRows2;r++){var v=getCellValue(ws.getRow(r).getCell(cand));if(v!==null&&typeof v==='string'&&/[\d]/.test(v)&&findCategoryIndex(v)<0)mrpLike++;}best.mrpCol=mrpLike>=2?cand:-1;}}
     var hasCS=best.storeCols.some(function(sc){return sc.type==='cs';});
     if(hasCS){best.storeCols=best.storeCols.filter(function(sc){return sc.type==='cs';});}
     else{var simple=best.storeCols.filter(function(sc){return sc.type==='simple';});if(simple.length>0)best.storeCols=simple;}
-    // Deduplicate by store
     var deduped={};best.storeCols.forEach(function(sc){if(!deduped[sc.storeIdx])deduped[sc.storeIdx]=sc;});
     best.storeCols=[];for(var k in deduped)best.storeCols.push(deduped[k]);
     best.storeCols.sort(function(a,b){return a.col-b.col;});
@@ -543,93 +506,62 @@ async function handleFileUpload(e){
     var f=e.target.files[0];if(!f)return;
     if(stores.length===0){alert('No stores loaded. Connect to Google Sheet first.');e.target.value='';return;}
     try{
-        var d=new Uint8Array(await f.arrayBuffer());
-        var wb=new ExcelJS.Workbook();await wb.xlsx.load(d);
+        var d=new Uint8Array(await f.arrayBuffer());var wb=new ExcelJS.Workbook();await wb.xlsx.load(d);
         var ws=wb.worksheets[0];if(!ws){alert('No worksheet found.');e.target.value='';return;}
-
         var header=detectHeaderRow(ws);
-        if(!header||header.storeCols.length===0){
-            alert('Could not find store columns.\n\nMake sure store names in header row match (case-insensitive):\n'+stores.join(', '));
-            e.target.value='';return;
-        }
-
+        if(!header||header.storeCols.length===0){alert('Could not find store columns.\n\nMake sure store names in header row match (case-insensitive):\n'+stores.join(', '));e.target.value='';return;}
         dbg('Header row: '+header.row+' | Cat col: '+header.catCol+' | MRP col: '+header.mrpCol+' | Stores: '+header.storeCols.length);
-
-        var matched=0,skipped=0,updatedCells=0,skippedRows=[],noMrpColSkipped=0;
-        var maxR=ws.rowCount||2000;
-
+        var matched=0,skipped=0,updatedCells=0,skippedRows=[],noMrpColSkipped=0;var maxR=ws.rowCount||2000;
         for(var rn=header.row+1;rn<=maxR;rn++){
             var row=ws.getRow(rn);if(!row||row.cellCount===0)continue;
             var catVal=getCellValue(row.getCell(header.catCol));
             if(catVal===null||typeof catVal!=='string'||catVal.trim()==='')continue;
-
-            var mrpStr='';
-            if(header.mrpCol>=0){var mv=getCellValue(row.getCell(header.mrpCol));mrpStr=(mv!==null&&mv!==undefined)?String(mv).trim():'';}
-
+            var mrpStr='';if(header.mrpCol>=0){var mv=getCellValue(row.getCell(header.mrpCol));mrpStr=(mv!==null&&mv!==undefined)?String(mv).trim():'';}
             var catIdx=findCategoryIndex(catVal);
             if(catIdx<0){skipped++;if(skippedRows.length<8)skippedRows.push('Row '+rn+': "'+catVal.substring(0,30)+'" — category not matched');continue;}
-
-            var cat=inventoryData[catIdx];
-            var hasMrp=cat.mrpDetails&&cat.mrpDetails.length>0;
-            var mrpIdx=-1;
-
+            var cat=inventoryData[catIdx];var hasMrp=cat.mrpDetails&&cat.mrpDetails.length>0;var mrpIdx=-1;
             if(hasMrp){
-                if(header.mrpCol>=0){
-                    mrpIdx=findMrpIndex(catIdx,mrpStr);
-                }else{
-                    // Try extracting MRP from category name (e.g. "COTTON 500 > 1000")
-                    var parts=catVal.split(/[\|\-–—\/\\:]/);
+                if(header.mrpCol>=0){mrpIdx=findMrpIndex(catIdx,mrpStr);}
+                else{
+                    var parts=catVal.split(/[\|\-–—\/\\:><]/);
                     for(var p=0;p<parts.length;p++){var test=findMrpIndex(catIdx,parts[p].trim());if(test>=0){mrpIdx=test;break;}}
                     if(mrpIdx<0){noMrpColSkipped++;skipped++;if(skippedRows.length<8)skippedRows.push('Row '+rn+': "'+cat.name+'" — no MRP column, cannot match sub-ranges');continue;}
                 }
                 if(mrpIdx===-2){skipped++;if(skippedRows.length<8)skippedRows.push('Row '+rn+': TOTAL row skipped (category has MRP sub-ranges)');continue;}
                 if(mrpIdx<0){skipped++;if(skippedRows.length<8)skippedRows.push('Row '+rn+': MRP "'+mrpStr+'" (normalized: "'+normalizeMrp(mrpStr)+'") not found in '+cat.name);continue;}
             }
-
             var rowUpdated=false;
             header.storeCols.forEach(function(sc){
-                var cell=row.getCell(sc.col);
-                var val=getCellValue(cell);
-                var numVal=parseNum(val);
+                var cell=row.getCell(sc.col);var val=getCellValue(cell);var numVal=parseNum(val);
                 if(hasMrp&&mrpIdx>=0){cat.mrpDetails[mrpIdx].present[sc.storeIdx]=numVal;}
                 else{cat.present[sc.storeIdx]=numVal;}
                 if(val!==null){updatedCells++;rowUpdated=true;}
             });
             if(rowUpdated)matched++;
         }
-
         enforceDataIntegrity();saveData();render();
-
         var msg='Upload Complete!\n\n';
         msg+='  Rows matched & updated: '+matched+'\n';
         msg+='  Individual cells written: '+updatedCells+'\n';
         msg+='  Rows skipped: '+skipped+'\n';
         msg+='  Stores detected: '+header.storeCols.length+' / '+stores.length+'\n';
         msg+='  Header row detected: Row '+header.row+'\n';
-        if(header.mrpCol>=0)msg+='  MRP column: Col '+header.mrpCol+'\n';
-        else msg+='  MRP column: auto-detect from category name\n';
-
-        var missing=[];
-        for(var i=0;i<stores.length;i++){if(!header.storeCols.find(function(sc){return sc.storeIdx===i;}))missing.push(stores[i]);}
+        if(header.mrpCol>=0)msg+='  MRP column: Col '+header.mrpCol+'\n';else msg+='  MRP column: auto-detect from category name\n';
+        var missing=[];for(var i=0;i<stores.length;i++){if(!header.storeCols.find(function(sc){return sc.storeIdx===i;}))missing.push(stores[i]);}
         if(missing.length>0)msg+='\n  Missing stores: '+missing.join(', ')+'\n';
         if(noMrpColSkipped>0)msg+='\n  ('+noMrpColSkipped+' rows skipped — add an MRP column for MRP sub-range categories)\n';
         if(skippedRows.length>0){msg+='\nSkipped details:\n';skippedRows.forEach(function(s){msg+='  '+s+'\n';});if(skipped>8)msg+='  ... and '+(skipped-8)+' more\n';}
         alert(msg);
-
     }catch(err){alert('Upload Error: '+err.message+'\n\nMake sure the file is a valid .xlsx file.');dbg('Upload error: '+err.message);}
     e.target.value='';
 }
 
-/* ================================================================
-   END UPLOAD SYSTEM
-   ================================================================ */
+/* ================================================================ */
 
 function calculateGlobalTransfer(){
     var allT=[];
-    for(var c=0;c<inventoryData.length;c++){
-        var cat=inventoryData[c];
-        var proc=function(cn,ml,ba,pa){
-            var su=[],sh=[];
+    for(var c=0;c<inventoryData.length;c++){var cat=inventoryData[c];
+        var proc=function(cn,ml,ba,pa){var su=[],sh=[];
             for(var i=0;i<stores.length;i++){var g=(pa[i]||0)-(ba[i]||0);if(g>0)su.push({store:stores[i],qty:g});else if(g<0)sh.push({store:stores[i],qty:Math.abs(g)});}
             su.sort(function(a,b){return b.qty-a.qty;});sh.sort(function(a,b){return b.qty-a.qty;});
             for(var si=0;si<sh.length;si++){var need=sh[si].qty;for(var pi=0;pi<su.length&&need>0;pi++){if(su[pi].qty<=0)continue;var mv=Math.min(need,su[pi].qty);if(mv>0){allT.push({category:cn,mrp:ml,from:su[pi].store,to:sh[si].store,qty:mv});need-=mv;su[pi].qty-=mv;}}}
@@ -640,11 +572,9 @@ function calculateGlobalTransfer(){
 }
 
 function buildTransferData(){
-    var transfers=calculateGlobalTransfer();
-    var routeSet={},catKeySet={};
+    var transfers=calculateGlobalTransfer();var routeSet={},catKeySet={};
     for(var t=0;t<transfers.length;t++){routeSet[transfers[t].from+'→'+transfers[t].to]=true;catKeySet[transfers[t].category+'|||'+transfers[t].mrp]=true;}
-    var catCount=0;for(var k in catKeySet)catCount++;
-    var routeCount=0;for(var k in routeSet)routeCount++;
+    var catCount=0;for(var k in catKeySet)catCount++;var routeCount=0;for(var k in routeSet)routeCount++;
     var totalQty=0;for(var t=0;t<transfers.length;t++)totalQty+=transfers[t].qty;
     return{transfers:transfers,totalQty:totalQty,catCount:catCount,routeCount:routeCount};
 }
@@ -669,33 +599,23 @@ function renderTransferReport(){
     for(var t=0;t<transfers.length;t++){var tr=transfers[t],key=tr.from+'|||'+tr.to;if(!routeMap[key])routeMap[key]={from:tr.from,to:tr.to,items:[]};routeMap[key].items.push({category:tr.category,mrp:tr.mrp,qty:tr.qty});}
     var routes=[];for(var k in routeMap){var total=0;for(var i=0;i<routeMap[k].items.length;i++)total+=routeMap[k].items[i].qty;routes.push({from:routeMap[k].from,to:routeMap[k].to,items:routeMap[k].items,total:total});}
     routes.sort(function(a,b){return b.total-a.total;});
-    var hh='<tr><th style="width:160px;text-align:left;padding-left:20px">FROM STORE</th><th style="width:36px"> </th><th style="width:160px">TO STORE</th><th style="text-align:left;padding-left:16px;min-width:220px">CATEGORY</th><th style="width:140px">MRP</th><th style="width:100px">MOVE QTY</th></tr>';
-    document.getElementById('transferTableHead').innerHTML=hh;
+    document.getElementById('transferTableHead').innerHTML='<tr><th style="width:160px;text-align:left;padding-left:20px">FROM STORE</th><th style="width:36px"> </th><th style="width:160px">TO STORE</th><th style="text-align:left;padding-left:16px;min-width:220px">CATEGORY</th><th style="width:140px">MRP</th><th style="width:100px">MOVE QTY</th></tr>';
     var bh='';
     if(routes.length===0){bh='<tr><td colspan="6" style="text-align:center;padding:60px 20px;border:none;background:transparent"><p style="font-size:20px;font-weight:800;color:var(--success)">NO TRANSFERS REQUIRED</p></td></tr>';}
-    else{
-        for(var r=0;r<routes.length;r++){
-            var route=routes[r];route.items.sort(function(a,b){return b.qty-a.qty;});
-            bh+='<tr class="route-sep"><td colspan="6" style="display:flex;justify-content:space-between;align-items:center"><span>'+route.from+' <span class="route-arrow" style="margin:0 8px">→</span> '+route.to+'</span><span style="font-size:12px;font-weight:600;color:var(--text-muted)">'+route.total.toLocaleString()+' items · '+route.items.length+' categor'+(route.items.length>1?'ies':'y')+'</span></td></tr>';
-            for(var i=0;i<route.items.length;i++){
-                var item=route.items[i],isFirst=(i===0);
-                bh+='<tr><td style="text-align:left;padding-left:20px;'+(isFirst?'font-weight:700;color:var(--danger)':'color:var(--text-muted);font-size:11px')+'">'+(isFirst?route.from:'')+'</td><td>'+(isFirst?'<span class="route-arrow">→</span>':'')+'</td><td style="'+(isFirst?'font-weight:700;color:var(--info)':'color:var(--text-muted);font-size:11px')+'">'+(isFirst?route.to:'')+'</td><td style="text-align:left;padding-left:16px;font-size:12px;font-weight:600">'+item.category+'</td><td><span class="badge badge-info">'+item.mrp+'</span></td><td><span class="tf-inflow-cell">'+item.qty+'</span></td></tr>';
-            }
-            bh+='<tr class="route-sub"><td colspan="5" style="text-align:right;padding-right:20px;font-weight:700;font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px">Route Total</td><td><span class="transfer-total-val">'+route.total+'</span></td></tr>';
-        }
-        bh+='<tr class="route-grand"><td colspan="5" style="text-align:right;padding-right:20px;font-weight:900;font-size:14px;color:var(--info)">GRAND TOTAL</td><td><span class="transfer-total-val" style="font-size:18px;border:2px solid var(--info)">'+data.totalQty+'</span></td></tr>';
-    }
+    else{for(var r=0;r<routes.length;r++){var route=routes[r];route.items.sort(function(a,b){return b.qty-a.qty;});
+        bh+='<tr class="route-sep"><td colspan="6" style="display:flex;justify-content:space-between;align-items:center"><span>'+route.from+' <span class="route-arrow" style="margin:0 8px">→</span> '+route.to+'</span><span style="font-size:12px;font-weight:600;color:var(--text-muted)">'+route.total.toLocaleString()+' items · '+route.items.length+' categor'+(route.items.length>1?'ies':'y')+'</span></td></tr>';
+        for(var i=0;i<route.items.length;i++){var item=route.items[i],isFirst=(i===0);bh+='<tr><td style="text-align:left;padding-left:20px;'+(isFirst?'font-weight:700;color:var(--danger)':'color:var(--text-muted);font-size:11px')+'">'+(isFirst?route.from:'')+'</td><td>'+(isFirst?'<span class="route-arrow">→</span>':'')+'</td><td style="'+(isFirst?'font-weight:700;color:var(--info)':'color:var(--text-muted);font-size:11px')+'">'+(isFirst?route.to:'')+'</td><td style="text-align:left;padding-left:16px;font-size:12px;font-weight:600">'+item.category+'</td><td><span class="badge badge-info">'+item.mrp+'</span></td><td><span class="tf-inflow-cell">'+item.qty+'</span></td></tr>';}
+        bh+='<tr class="route-sub"><td colspan="5" style="text-align:right;padding-right:20px;font-weight:700;font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px">Route Total</td><td><span class="transfer-total-val">'+route.total+'</span></td></tr>';}
+        bh+='<tr class="route-grand"><td colspan="5" style="text-align:right;padding-right:20px;font-weight:900;font-size:14px;color:var(--info)">GRAND TOTAL</td><td><span class="transfer-total-val" style="font-size:18px;border:2px solid var(--info)">'+data.totalQty+'</span></td></tr>';}
     document.getElementById('transferTableBody').innerHTML=bh;
 }
 
 function getSimulatedPurchaseData(){
     var si=JSON.parse(JSON.stringify(inventoryData));var tr=calculateGlobalTransfer();
-    for(var t=0;t<tr.length;t++){
-        var trn=tr[t];var c=null;for(var x=0;x<si.length;x++){if(si[x].name===trn.category){c=si[x];break;}}if(!c)continue;
+    for(var t=0;t<tr.length;t++){var trn=tr[t];var c=null;for(var x=0;x<si.length;x++){if(si[x].name===trn.category){c=si[x];break;}}if(!c)continue;
         var fi=stores.indexOf(trn.from),ti=stores.indexOf(trn.to);if(fi<0||ti<0)continue;
         if(c.mrpDetails.length>0){var m=null;for(var y=0;y<c.mrpDetails.length;y++){if(c.mrpDetails[y].range===trn.mrp){m=c.mrpDetails[y];break;}}if(m){m.present[fi]=Math.max(0,(m.present[fi]||0)-trn.qty);m.present[ti]=(m.present[ti]||0)+trn.qty;}}
-        else{c.present[fi]=Math.max(0,(c.present[fi]||0)-trn.qty);c.present[ti]=(c.present[ti]||0)+trn.qty;}
-    }
+        else{c.present[fi]=Math.max(0,(c.present[fi]||0)-trn.qty);c.present[ti]=(c.present[ti]||0)+trn.qty;}}
     si.forEach(function(c){if(c.mrpDetails.length>0){c.base.fill(0);c.present.fill(0);c.mrpDetails.forEach(function(m){m.base.forEach(function(v,i){c.base[i]+=v||0;});m.present.forEach(function(v,i){c.present[i]+=v||0;});});}});
     return si;
 }
@@ -706,30 +626,23 @@ function closePurchaseReport(){document.getElementById('purchaseReportView').cla
 function renderPurchaseReport(){
     var sd=getSimulatedPurchaseData();var transfers=calculateGlobalTransfer();var transferTotal=0;for(var t=0;t<transfers.length;t++)transferTotal+=transfers[t].qty;
     var numS=stores.length;
-    var hh='<tr>';hh+='<th class="sticky-col-1 col-cat">CATEGORY</th>';hh+='<th class="sticky-col-2 col-mrp">MRP</th>';
-    for(var s=0;s<numS;s++)hh+='<th class="col-store">'+stores[s]+'</th>';
-    hh+='<th class="sticky-action" style="min-width:110px">TOTAL</th>';hh+='</tr>';
-    document.getElementById('purchaseTableHead').innerHTML=hh;
+    document.getElementById('purchaseTableHead').innerHTML='<tr><th class="sticky-col-1 col-cat">CATEGORY</th><th class="sticky-col-2 col-mrp">MRP</th>'+stores.map(function(s){return '<th class="col-store">'+s+'</th>';}).join('')+'<th class="sticky-action" style="min-width:110px">TOTAL</th></tr>';
     var bh='';var gps=Array(numS).fill(0);var gt=0;var catTotals={};var affectedStores={};var catsNeeded=0;var anyRow=false;
-    for(var c=0;c<inventoryData.length;c++){
-        var cat=inventoryData[c];var sc=sd[c];var hasM=cat.mrpDetails.length>0;var mlist=[];
+    for(var c=0;c<inventoryData.length;c++){var cat=inventoryData[c];var sc=sd[c];var hasM=cat.mrpDetails.length>0;var mlist=[];
         if(hasM){for(var m=0;m<cat.mrpDetails.length;m++)mlist.push({range:cat.mrpDetails[m].range,base:cat.mrpDetails[m].base,simPresent:sc.mrpDetails[m].present});}
         else mlist.push({range:'TOTAL',base:cat.base,simPresent:sc.present});
         var catPurch=Array(numS).fill(0);var catHas=false;
-        for(var m=0;m<mlist.length;m++){
-            var mr=mlist[m];var purchases=[],rTotal=0,rowHasBuy=false;
+        for(var m=0;m<mlist.length;m++){var mr=mlist[m];var purchases=[],rTotal=0,rowHasBuy=false;
             for(var si=0;si<numS;si++){var buy=Math.max(0,(mr.base[si]||0)-(mr.simPresent[si]||0));purchases.push(buy);rTotal+=buy;if(buy>0)rowHasBuy=true;}
             if(hasM&&!rowHasBuy)continue;catHas=true;anyRow=true;var isT=!hasM;
             var row='<tr class="'+(isT?'total-row':'')+'">';
             if(isT){row+='<td class="sticky-col-1 col-cat" style="font-weight:800">'+cat.name+'</td>';row+='<td class="sticky-col-2 col-mrp"><span class="badge badge-warning">TOTAL</span></td>';}
             else{row+='<td class="sticky-col-1 col-cat" style="font-size:11px;color:var(--text-muted)">'+cat.name+'</td>';row+='<td class="sticky-col-2 col-mrp"><span class="badge badge-info">'+mr.range+'</span></td>';}
             for(var si=0;si<numS;si++){catPurch[si]+=purchases[si];gps[si]+=purchases[si];var buy=purchases[si];row+='<td class="col-store">'+(buy>0?'<span class="purchase-val">'+buy+'</span>':'<span class="zero-dash">—</span>')+'</td>';}
-            row+='<td class="sticky-action">'+(rTotal>0?'<span class="'+(isT?'purchase-total-val':'purchase-val')+'">'+rTotal+'</span>':'<span class="zero-dash">—</span>')+'</td></tr>';bh+=row;
-        }
+            row+='<td class="sticky-action">'+(rTotal>0?'<span class="'+(isT?'purchase-total-val':'purchase-val')+'">'+rTotal+'</span>':'<span class="zero-dash">—</span>')+'</td></tr>';bh+=row;}
         if(hasM&&catHas){var cT=0;var ctr='<tr class="total-row">';ctr+='<td class="sticky-col-1 col-cat" style="font-weight:800">'+cat.name+'</td>';ctr+='<td class="sticky-col-2 col-mrp"><span class="badge badge-warning">TOTAL</span></td>';for(var si=0;si<numS;si++){cT+=catPurch[si];ctr+='<td class="col-store">'+(catPurch[si]>0?'<span class="purchase-val" style="font-size:13px">'+catPurch[si]+'</span>':'<span class="zero-dash">—</span>')+'</td>';}if(cT>0){ctr+='<td class="sticky-action"><span class="purchase-total-val">'+cT+'</span></td>';catTotals[cat.name]=cT;catsNeeded++;}else{ctr+='<td class="sticky-action"><span class="zero-dash">—</span></td>';}ctr+='</tr>';bh+=ctr;}
         else if(!hasM&&catHas){var cT=0;for(var si=0;si<numS;si++)cT+=catPurch[si];if(cT>0){catTotals[cat.name]=cT;catsNeeded++;}}
-        for(var si=0;si<numS;si++){if(catPurch[si]>0)affectedStores[stores[si]]=true;}
-    }
+        for(var si=0;si<numS;si++){if(catPurch[si]>0)affectedStores[stores[si]]=true;}}
     gt=0;for(var si=0;si<numS;si++)gt+=gps[si];
     if(anyRow){bh+='<tr class="purchase-grand-row"><td class="sticky-col-1 col-cat" style="font-size:14px">GRAND TOTAL</td><td class="sticky-col-2 col-mrp"></td>';for(var si=0;si<numS;si++)bh+='<td class="col-store"><span class="purchase-total-val" style="font-size:13px">'+gps[si]+'</span></td>';bh+='<td class="sticky-action"><span class="purchase-total-val" style="font-size:16px;border:2px solid var(--danger)">'+gt+'</span></td></tr>';}
     if(!anyRow)bh='<tr><td colspan="'+(3+numS)+'" style="text-align:center;padding:60px 20px;border:none;background:transparent"><p style="font-size:20px;font-weight:800;color:var(--success)">NO PURCHASES REQUIRED</p><p style="font-size:13px;color:var(--text-muted);margin-top:12px">All targets met after transfers.</p></td></tr>';
@@ -745,18 +658,12 @@ async function exportTransferExcel(){
     for(var t=0;t<transfers.length;t++){var tr=transfers[t];var key=tr.from+'|||'+tr.to;if(!routeMap[key])routeMap[key]={from:tr.from,to:tr.to,items:[]};routeMap[key].items.push({category:tr.category,mrp:tr.mrp,qty:tr.qty});}
     var routes=[];for(var k in routeMap){var total=0;for(var i=0;i<routeMap[k].items.length;i++)total+=routeMap[k].items[i].qty;routes.push({from:routeMap[k].from,to:routeMap[k].to,items:routeMap[k].items,total:total});}
     routes.sort(function(a,b){return b.total-a.total;});
-    var wb=new ExcelJS.Workbook();var ws=wb.addWorksheet('Transfer Routes');
-    ws.columns=[{width:25},{width:5},{width:25},{width:35},{width:18},{width:12}];
+    var wb=new ExcelJS.Workbook();var ws=wb.addWorksheet('Transfer Routes');ws.columns=[{width:25},{width:5},{width:25},{width:35},{width:18},{width:12}];
     var r=ws.getRow(1);r.getCell(1).value='FROM STORE';r.getCell(3).value='TO STORE';r.getCell(4).value='CATEGORY';r.getCell(5).value='MRP';r.getCell(6).value='MOVE QTY';
-    r.eachCell(function(c){c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF0984E3'}};c.font={bold:true,color:{argb:'FFFFFFFF'},size:11};c.alignment={horizontal:'center',vertical:'middle'};});
-    r.getCell(1).alignment={horizontal:'left'};r.getCell(4).alignment={horizontal:'left'};
-    var cr=2;
-    for(var ri=0;ri<routes.length;ri++){
-        var route=routes[ri];route.items.sort(function(a,b){return b.qty-a.qty;});
+    r.eachCell(function(c){c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF0984E3'}};c.font={bold:true,color:{argb:'FFFFFFFF'},size:11};c.alignment={horizontal:'center',vertical:'middle'};});r.getCell(1).alignment={horizontal:'left'};r.getCell(4).alignment={horizontal:'left'};
+    var cr=2;for(var ri=0;ri<routes.length;ri++){var route=routes[ri];route.items.sort(function(a,b){return b.qty-a.qty;});
         var hr=ws.getRow(cr);hr.getCell(1).value=route.from+' → '+route.to;ws.mergeCells(cr,1,cr,3);hr.getCell(1).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFDBEAFE'}};hr.getCell(1).font={bold:true,color:{argb:'FF0077B6'},size:12};hr.getCell(1).alignment={horizontal:'left'};hr.getCell(6).value=route.total;hr.getCell(6).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFDBEAFE'}};hr.getCell(6).font={bold:true,color:{argb:'FF0077B6'},size:11};hr.getCell(6).alignment={horizontal:'center'};cr++;
-        for(var ii=0;ii<route.items.length;ii++){var item=route.items[ii];var ir=ws.getRow(cr);ir.getCell(1).value=ii===0?route.from:'';ir.getCell(3).value=ii===0?route.to:'';ir.getCell(4).value=item.category;ir.getCell(5).value=item.mrp;ir.getCell(6).value=item.qty;ir.getCell(6).font={name:'Consolas',size:10,bold:true,color:{argb:'FF0077B6'}};ir.getCell(6).alignment={horizontal:'center'};ir.getCell(4).alignment={horizontal:'left'};if(ii===0){ir.getCell(1).font={bold:true,color:{argb:'FFDC2626'}};ir.getCell(3).font={bold:true,color:{argb:'FF0984E3'}};}cr++;}
-        cr++;
-    }
+        for(var ii=0;ii<route.items.length;ii++){var item=route.items[ii];var ir=ws.getRow(cr);ir.getCell(1).value=ii===0?route.from:'';ir.getCell(3).value=ii===0?route.to:'';ir.getCell(4).value=item.category;ir.getCell(5).value=item.mrp;ir.getCell(6).value=item.qty;ir.getCell(6).font={name:'Consolas',size:10,bold:true,color:{argb:'FF0077B6'}};ir.getCell(6).alignment={horizontal:'center'};ir.getCell(4).alignment={horizontal:'left'};if(ii===0){ir.getCell(1).font={bold:true,color:{argb:'FFDC2626'}};ir.getCell(3).font={bold:true,color:{argb:'FF0984E3'}};}cr++;}cr++;}
     var gr=ws.getRow(cr);gr.getCell(1).value='GRAND TOTAL';ws.mergeCells(cr,1,cr,5);gr.getCell(1).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF0984E3'}};gr.getCell(1).font={bold:true,size:12,color:{argb:'FFFFFFFF'}};gr.getCell(1).alignment={horizontal:'right'};gr.getCell(6).value=data.totalQty;gr.getCell(6).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF0984E3'}};gr.getCell(6).font={bold:true,size:14,color:{argb:'FFFFFFFF'}};gr.getCell(6).alignment={horizontal:'center'};
     var buf=await wb.xlsx.writeBuffer();saveAs(new Blob([buf]),'Transfer_Routes.xlsx');
 }
@@ -767,21 +674,17 @@ async function exportSmartPurchaseExcel(){
     var r1=ws.getRow(1);r1.height=28;r1.getCell(1).value='CATEGORY';r1.getCell(2).value='MRP';for(var s=0;s<numS;s++)r1.getCell(3+s).value=stores[s];r1.getCell(3+numS).value='TOTAL';
     r1.eachCell(function(c){c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFDC2626'}};c.font={bold:true,color:{argb:'FFFFFFFF'},size:11};c.alignment={horizontal:'center',vertical:'middle'};});r1.getCell(1).alignment={horizontal:'left'};
     var cr=2;var gps=Array(numS).fill(0);
-    for(var c=0;c<inventoryData.length;c++){
-        var cat=inventoryData[c];var sc=sd[c];var hasM=cat.mrpDetails.length>0;var mlist=[];
+    for(var c=0;c<inventoryData.length;c++){var cat=inventoryData[c];var sc=sd[c];var hasM=cat.mrpDetails.length>0;var mlist=[];
         if(hasM){for(var m=0;m<cat.mrpDetails.length;m++)mlist.push({range:cat.mrpDetails[m].range,base:cat.mrpDetails[m].base,simPresent:sc.mrpDetails[m].present});}
         else mlist.push({range:'TOTAL',base:cat.base,simPresent:sc.present});
         var catPurch=Array(numS).fill(0);var catHas=false;
-        for(var m=0;m<mlist.length;m++){
-            var mr=mlist[m];var purchases=[],rTotal=0,rowHasBuy=false;
+        for(var m=0;m<mlist.length;m++){var mr=mlist[m];var purchases=[],rTotal=0,rowHasBuy=false;
             for(var si=0;si<numS;si++){var buy=Math.max(0,(mr.base[si]||0)-(mr.simPresent[si]||0));purchases.push(buy);rTotal+=buy;if(buy>0)rowHasBuy=true;}
             if(hasM&&!rowHasBuy)continue;catHas=true;var isT=!hasM;
             var er=ws.getRow(cr);er.getCell(1).value=cat.name;er.getCell(2).value=mr.range;if(isT){er.getCell(1).font={bold:true};er.getCell(2).font={bold:true};}
             for(var si=0;si<numS;si++){catPurch[si]+=purchases[si];gps[si]+=purchases[si];var buy=purchases[si];var bc=er.getCell(3+si);if(buy>0){bc.value=buy;bc.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFECACA'}};bc.font={name:'Consolas',size:10,bold:true,color:{argb:'FFDC2626'}};bc.alignment={horizontal:'center'};}}
-            var rtc=er.getCell(3+numS);rtc.value=rTotal;if(rTotal>0){rtc.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFDC2626'}};rtc.font={name:'Consolas',size:10,bold:true,color:{argb:'FFFFFFFF'}};rtc.alignment={horizontal:'center'};}cr++;
-        }
-        if(hasM&&catHas){var cT=0;for(var si=0;si<numS;si++)cT+=catPurch[si];var tr=ws.getRow(cr);tr.getCell(1).value=cat.name;tr.getCell(2).value='TOTAL';tr.getCell(1).font={bold:true};tr.getCell(2).font={bold:true};tr.getCell(1).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFE0F2F1'}};tr.getCell(2).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFE0F2F1'}};for(var si=0;si<numS;si++){var bc=tr.getCell(3+si);if(catPurch[si]>0){bc.value=catPurch[si];bc.font={name:'Consolas',size:10,bold:true,color:{argb:'FFDC2626'}};bc.alignment={horizontal:'center'};}}var tc=tr.getCell(3+numS);tc.value=cT;if(cT>0){tc.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFDC2626'}};tc.font={name:'Consolas',size:11,bold:true,color:{argb:'FFFFFFFF'}};tc.alignment={horizontal:'center'};}cr++;}
-    }
+            var rtc=er.getCell(3+numS);rtc.value=rTotal;if(rTotal>0){rtc.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFDC2626'}};rtc.font={name:'Consolas',size:10,bold:true,color:{argb:'FFFFFFFF'}};rtc.alignment={horizontal:'center'};}cr++;}
+        if(hasM&&catHas){var cT=0;for(var si=0;si<numS;si++)cT+=catPurch[si];var tr=ws.getRow(cr);tr.getCell(1).value=cat.name;tr.getCell(2).value='TOTAL';tr.getCell(1).font={bold:true};tr.getCell(2).font={bold:true};tr.getCell(1).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFE0F2F1'}};tr.getCell(2).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFE0F2F1'}};for(var si=0;si<numS;si++){var bc=tr.getCell(3+si);if(catPurch[si]>0){bc.value=catPurch[si];bc.font={name:'Consolas',size:10,bold:true,color:{argb:'FFDC2626'}};bc.alignment={horizontal:'center'};}}var tc=tr.getCell(3+numS);tc.value=cT;if(cT>0){tc.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFDC2626'}};tc.font={name:'Consolas',size:11,bold:true,color:{argb:'FFFFFFFF'}};tc.alignment={horizontal:'center'};}cr++;}}
     var gt=0;for(var si=0;si<numS;si++)gt+=gps[si];
     var gr=ws.getRow(cr);gr.getCell(1).value='GRAND TOTAL';gr.getCell(1).font={bold:true,size:12,color:{argb:'FFFFFFFF'}};gr.getCell(1).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFB91C1C'}};gr.getCell(1).alignment={horizontal:'left'};
     for(var si=0;si<numS;si++){var c=gr.getCell(3+si);c.value=gps[si];c.font={name:'Consolas',size:11,bold:true,color:{argb:'FFFFFFFF'}};c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFB91C1C'}};c.alignment={horizontal:'center'};}
@@ -802,46 +705,28 @@ function closeModal(){document.getElementById('modal').classList.add('hidden');}
 
 function addBr(){if(cloudConnected){showToast('Cannot add — connected to Sheet');return;}var n=document.getElementById('newBr').value.trim().toUpperCase();if(!n||stores.includes(n))return alert('Empty or duplicate');stores.push(n);inventoryData.forEach(function(c){while(c.base.length<stores.length)c.base.push(0);while(c.present.length<stores.length)c.present.push(0);c.mrpDetails.forEach(function(m){while(m.base.length<stores.length)m.base.push(0);while(m.present.length<stores.length)m.present.push(0);});});enforceDataIntegrity();saveData();render();document.getElementById('newBr').value='';showToast('Branch added');}
 
-function updateMrpOptions(){
-    var n=document.getElementById('manualCatInput').value.toUpperCase().trim();var l=document.getElementById('mrpList');l.innerHTML='<option value="TOTAL">TOTAL</option>';if(!n)return;
-    var c=null;for(var i=0;i<inventoryData.length;i++){if(inventoryData[i].name===n){c=inventoryData[i];break;}}
-    if(c&&c.mrpDetails)c.mrpDetails.forEach(function(m){var o=document.createElement('option');o.value=m.range;o.textContent=m.range;l.appendChild(o);});
-}
+function updateMrpOptions(){var n=document.getElementById('manualCatInput').value.toUpperCase().trim();var l=document.getElementById('mrpList');l.innerHTML='<option value="TOTAL">TOTAL</option>';if(!n)return;var c=null;for(var i=0;i<inventoryData.length;i++){if(inventoryData[i].name===n){c=inventoryData[i];break;}}if(c&&c.mrpDetails)c.mrpDetails.forEach(function(m){var o=document.createElement('option');o.value=m.range;o.textContent=m.range;l.appendChild(o);});}
 
 function saveManualData(){
     var nm=document.getElementById('manualCatInput').value.toUpperCase().trim(),mr=document.getElementById('manualMrp').value.trim(),si=parseInt(document.getElementById('manualBranch').value),st=parseInt(document.getElementById('manualStock').value)||0;
-    if(!nm||!mr||isNaN(si))return alert('Fill all fields');
-    var idx=-1;for(var i=0;i<inventoryData.length;i++){if(inventoryData[i].name===nm){idx=i;break;}}
-    if(idx===-1){showToast('Category not found');return;}
-    var c=inventoryData[idx];
+    if(!nm||!mr||isNaN(si))return alert('Fill all fields');var idx=-1;for(var i=0;i<inventoryData.length;i++){if(inventoryData[i].name===nm){idx=i;break;}}
+    if(idx===-1){showToast('Category not found');return;}var c=inventoryData[idx];
     if(si===-1){if(mr.toUpperCase()==='TOTAL'){for(var i=0;i<stores.length;i++)c.present[i]=st;}else{var r=null;for(var j=0;j<c.mrpDetails.length;j++){if(c.mrpDetails[j].range===mr){r=c.mrpDetails[j];break;}}if(!r){showToast('MRP not found');return;}for(var i=0;i<stores.length;i++)r.present[i]=st;}}
     else{if(mr.toUpperCase()==='TOTAL')c.present[si]=st;else{var r=null;for(var j=0;j<c.mrpDetails.length;j++){if(c.mrpDetails[j].range===mr){r=c.mrpDetails[j];break;}}if(!r){showToast('MRP not found');return;}r.present[si]=st;}}
     enforceDataIntegrity();closeManualModal();saveData();render();
 }
 
-async function exportBranchReport(){
-    if(currentModalBranchIndex===null)return;var si=currentModalBranchIndex,nm=stores[si];
-    var wb=new ExcelJS.Workbook();var ws=wb.addWorksheet(nm);ws.columns=[{width:25},{width:10},{width:10},{width:30}];
-    ws.addRow(['Report: '+nm]);ws.addRow(['Category','Target','Stock','Action']);
-    inventoryData.forEach(function(c){var p=Math.max(0,(c.base[si]||0)-(c.present[si]||0));ws.addRow([c.name,c.base[si]||0,c.present[si]||0,p>0?'Buy '+p:'OK']);});
-    var buf=await wb.xlsx.writeBuffer();saveAs(new Blob([buf]),nm+'_Report.xlsx');
-}
+async function exportBranchReport(){if(currentModalBranchIndex===null)return;var si=currentModalBranchIndex,nm=stores[si];var wb=new ExcelJS.Workbook();var ws=wb.addWorksheet(nm);ws.columns=[{width:25},{width:10},{width:10},{width:30}];ws.addRow(['Report: '+nm]);ws.addRow(['Category','Target','Stock','Action']);inventoryData.forEach(function(c){var p=Math.max(0,(c.base[si]||0)-(c.present[si]||0));ws.addRow([c.name,c.base[si]||0,c.present[si]||0,p>0?'Buy '+p:'OK']);});var buf=await wb.xlsx.writeBuffer();saveAs(new Blob([buf]),nm+'_Report.xlsx');}
 
 async function exportMatrixExcel(){
     var wb=new ExcelJS.Workbook();var ws=wb.addWorksheet('Stock Matrix');
     var cols=[{width:25},{width:15}];stores.forEach(function(){cols.push({width:8},{width:8});});cols.push({width:20});ws.columns=cols;
     var r1=ws.getRow(1);r1.getCell(1).value='Category';r1.getCell(2).value='MRP';var ci2=3;stores.forEach(function(s){r1.getCell(ci2).value=s+' BS';r1.getCell(ci2+1).value=s+' CS';ci2+=2;});r1.getCell(ci2).value='AI';
     r1.eachCell(function(c){c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF00B894'}};c.font={bold:true,color:{argb:'FFFFFFFF'},size:11};c.alignment={horizontal:'center',vertical:'middle'};});r1.getCell(1).alignment={horizontal:'left'};
-    var cr=2;
-    inventoryData.forEach(function(cat){
-        if(cat.mrpDetails.length>0)cat.mrpDetails.forEach(function(mrp){
-            var row=ws.getRow(cr);row.getCell(1).value=cat.name;row.getCell(2).value=mrp.range;var dc=3;
-            stores.forEach(function(_,si){row.getCell(dc).value=mrp.base[si]||0;var sc=row.getCell(dc+1);sc.value=mrp.present[si]||0;sc.alignment={horizontal:'center'};sc.font={bold:true,name:'Consolas',size:10};var g=(mrp.present[si]||0)-(mrp.base[si]||0);sc.fill={type:'pattern',pattern:'solid',fgColor:{argb:g>0?'FFFECACA':g<0?'FFBBF7D0':'FFBFDBFE'}};dc+=2;});cr++;
-        });
-        var tr=ws.getRow(cr);tr.getCell(1).value=cat.name;tr.getCell(2).value='TOTAL';tr.getCell(1).font={bold:true};tr.getCell(2).font={bold:true};tr.getCell(1).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFE0F2F1'}};tr.getCell(2).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFE0F2F1'}};
-        var dc=3;stores.forEach(function(_,si){tr.getCell(dc).value=cat.base[si]||0;var sc=tr.getCell(dc+1);sc.value=cat.present[si]||0;sc.alignment={horizontal:'center'};sc.font={bold:true,name:'Consolas',size:10};var g=(cat.present[si]||0)-(cat.base[si]||0);sc.fill={type:'pattern',pattern:'solid',fgColor:{argb:g>0?'FFFECACA':g<0?'FFBBF7D0':'FFBFDBFE'}};dc+=2;});cr++;
-    });
-    var buf=await wb.xlsx.writeBuffer();saveAs(new Blob([buf]),'Stock_Matrix.xlsx');
+    var cr=2;inventoryData.forEach(function(cat){
+        if(cat.mrpDetails.length>0)cat.mrpDetails.forEach(function(mrp){var row=ws.getRow(cr);row.getCell(1).value=cat.name;row.getCell(2).value=mrp.range;var dc=3;stores.forEach(function(_,si){row.getCell(dc).value=mrp.base[si]||0;var sc=row.getCell(dc+1);sc.value=mrp.present[si]||0;sc.alignment={horizontal:'center'};sc.font={bold:true,name:'Consolas',size:10};var g=(mrp.present[si]||0)-(mrp.base[si]||0);sc.fill={type:'pattern',pattern:'solid',fgColor:{argb:g>0?'FFFECACA':g<0?'FFBBF7D0':'FFBFDBFE'}};dc+=2;});cr++;});
+        var tr=ws.getRow(cr);tr.getCell(1).value=cat.name;tr.getCell(2).value='TOTAL';tr.getCell(1).font={bold:true};tr.getCell(2).font={bold:true};tr.getCell(1).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFE0F2F1'}};tr.getCell(2).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFE0F2F1'}};var dc=3;stores.forEach(function(_,si){tr.getCell(dc).value=cat.base[si]||0;var sc=tr.getCell(dc+1);sc.value=cat.present[si]||0;sc.alignment={horizontal:'center'};sc.font={bold:true,name:'Consolas',size:10};var g=(cat.present[si]||0)-(cat.base[si]||0);sc.fill={type:'pattern',pattern:'solid',fgColor:{argb:g>0?'FFFECACA':g<0?'FFBBF7D0':'FFBFDBFE'}};dc+=2;});cr++;
+    });var buf=await wb.xlsx.writeBuffer();saveAs(new Blob([buf]),'Stock_Matrix.xlsx');
 }
 
 function toggleTheme(){document.body.classList.toggle('dark-mode');render();}
